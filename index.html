@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Passet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: sticky two-row app header (brand/role/language, then tabs/demo clock); one content column, max 1080px; work items as cards, state shown by coloured dot + label */
+:root{
+  --bg:#f2f6f4; --surface:#ffffff; --surface-2:#e8efec; --fg:#13211d; --muted:#596a64; --line:#d3ddd9;
+  --accent:#0c6857; --accent-ink:#ffffff; --accent-soft:#d3eae2;
+  --gap:#7d8b86; --posted:#b67507; --app:#2a62c4; --ok:#1b7c44; --done:#34443f; --bad:#bd3a2a;
+  --gap-soft:#e3e9e6; --posted-soft:#f5e8cf; --app-soft:#dbe6f8; --ok-soft:#d5eedf; --done-soft:#e1e7e5; --bad-soft:#f5dad5;
+  --avl:86%; --avf:24%;
+  --shadow:0 1px 2px rgba(19,33,29,.06),0 8px 24px rgba(19,33,29,.08);
+  --font:'Schibsted Grotesk',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1311; --surface:#131c19; --surface-2:#1a2521; --fg:#e3ede9; --muted:#93a39d; --line:#283631;
+  --accent:#45c2a4; --accent-ink:#04231b; --accent-soft:#163a31;
+  --gap:#7e8d88; --posted:#e4a944; --app:#7aa6f1; --ok:#52c585; --done:#b4c2bd; --bad:#f17d6b;
+  --gap-soft:#212c28; --posted-soft:#3a2e16; --app-soft:#1a2944; --ok-soft:#153824; --done-soft:#222d29; --bad-soft:#41201a;
+  --avl:28%; --avf:88%; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1311; --surface:#131c19; --surface-2:#1a2521; --fg:#e3ede9; --muted:#93a39d; --line:#283631;
+  --accent:#45c2a4; --accent-ink:#04231b; --accent-soft:#163a31;
+  --gap:#7e8d88; --posted:#e4a944; --app:#7aa6f1; --ok:#52c585; --done:#b4c2bd; --bad:#f17d6b;
+  --gap-soft:#212c28; --posted-soft:#3a2e16; --app-soft:#1a2944; --ok-soft:#153824; --done-soft:#222d29; --bad-soft:#41201a;
+  --avl:28%; --avf:88%; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.15rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand svg{width:28px;height:28px;flex:none}
+.bname{font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
+.demo{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:99px;background:var(--posted-soft);color:var(--fg)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:99px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:99px;font-weight:600;font-size:.88rem;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:0 8px}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1 1 420px;min-width:0}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;background:transparent;padding:8px 11px;border-radius:8px;font-weight:600;font-size:.9rem;white-space:nowrap;cursor:pointer;color:var(--muted)}
+.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--fg)}
+.count{display:inline-block;min-width:1.4em;padding:0 5px;border-radius:99px;background:var(--bad);color:#fff;font-size:.72rem;line-height:1.4em;text-align:center}
+.clock{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem}
+.clock b{font-family:var(--mono);font-weight:500;font-size:.82rem}
+.clock .clabel{color:var(--muted)}
+.clock button{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:3px 8px;font-size:.8rem;font-weight:600;cursor:pointer}
+.clock button:hover{border-color:var(--accent)}
+
+/* main */
+.main{padding-block:22px 64px;display:flex;flex-direction:column;gap:18px}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.pagehead>div{min-width:0;max-width:62ch}
+.lede{color:var(--muted);margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.section-title{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:6px 0 -2px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .v{font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .k{font-size:.82rem;color:var(--muted)}
+
+/* buttons & fields */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:9px;font-weight:600;font-size:.9rem;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.btn.sm{padding:5px 10px;font-size:.82rem;border-radius:8px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{border:0;background:none;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>span{font-size:.82rem;font-weight:600;color:var(--muted)}
+.field.inline{flex-direction:row;align-items:center;gap:8px}
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;min-height:38px}
+textarea{min-height:76px;resize:vertical}
+.field.inline select{width:auto}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:17px;height:17px}
+.check{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.check input{margin-top:3px;flex:none}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px}
+.form .full{grid-column:1/-1}
+fieldset{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:0;min-width:0}
+legend{font-weight:700;padding:0 6px}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.days label{display:inline-flex;position:relative}
+.days input{position:absolute;opacity:0;width:1px;height:1px}
+.days span{display:inline-block;padding:6px 11px;border-radius:99px;border:1px solid var(--line);font-weight:600;font-size:.85rem;cursor:pointer}
+.days input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.days input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+
+/* pills & tags */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 8px;border-radius:99px;font-size:.78rem;font-weight:600;white-space:nowrap;background:var(--gap-soft)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--gap);flex:none}
+.pill.posted{background:var(--posted-soft)} .pill.posted i{background:var(--posted)}
+.pill.app{background:var(--app-soft)} .pill.app i{background:var(--app)}
+.pill.ok{background:var(--ok-soft)} .pill.ok i{background:var(--ok)}
+.pill.done{background:var(--done-soft)} .pill.done i{background:var(--done)}
+.pill.bad{background:var(--bad-soft)} .pill.bad i{background:var(--bad)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:.76rem;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface-2);color:var(--fg)}
+.tag.acc{background:var(--accent-soft)}
+.verified{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;font-weight:700;color:var(--ok)}
+.verified svg{width:15px;height:15px}
+
+/* alerts */
+.alert{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;border-radius:var(--r);padding:12px 14px;border:1px solid var(--line);background:var(--surface)}
+.alert.bad{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.alert.warn{background:var(--posted-soft);border-color:color-mix(in srgb,var(--posted) 35%,transparent)}
+.alert.info{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.alert>span{flex:1 1 260px;min-width:0}
+
+/* roster board */
+.legend{display:flex;gap:6px;flex-wrap:wrap}
+.day{display:grid;grid-template-columns:96px 1fr;gap:10px;padding-block:10px;border-top:1px solid var(--line)}
+.day:first-child{border-top:0}
+.dlabel{font-weight:700;font-size:.9rem;padding-top:8px}
+.dlabel small{display:block;font-weight:500;color:var(--muted);font-size:.78rem}
+.dlabel.today{color:var(--accent)}
+.chips{display:flex;flex-direction:column;gap:6px;min-width:0}
+.chip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 12px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.ctime{font-family:var(--mono);font-size:.82rem}
+.cmain{display:flex;flex-direction:column;min-width:0}
+.cmain b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmain span{font-size:.8rem}
+.empty-day{color:var(--muted);font-size:.85rem;padding-top:8px}
+@media (max-width:560px){
+  .day{grid-template-columns:1fr;gap:6px}
+  .dlabel{padding-top:0}
+  .chip{grid-template-columns:1fr auto;}
+  .chip .ctime{grid-column:1/-1}
+}
+
+/* shift cards */
+.shift .when{font-size:.85rem;color:var(--muted)}
+.shift h3{margin-top:2px}
+.rate{font-family:var(--mono);font-weight:500;font-size:1.05rem;text-align:right}
+.rate small{display:block;font-family:var(--font);font-size:.75rem;color:var(--muted)}
+.shift .top{align-items:flex-start;justify-content:space-between}
+.shift .top>div:first-child{min-width:0;flex:1 1 220px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.foot{justify-content:space-between;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.applied{font-weight:600;color:var(--app)}
+.logi{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.88rem;background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.logi dt{color:var(--muted)} .logi dd{margin:0;min-width:0}
+
+/* people */
+.person{display:flex;gap:12px;align-items:center;min-width:0}
+.person>div{min-width:0}
+.av{--h:160;display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;flex:none;font-weight:700;font-size:.85rem;background:hsl(var(--h) 38% var(--avl));color:hsl(var(--h) 45% var(--avf))}
+.av.lg{width:56px;height:56px;font-size:1.1rem}
+.list{display:flex;flex-direction:column}
+.list>.li{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}
+.list>.li:first-child{border-top:0;padding-top:4px}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+
+/* invoice lines */
+.lines{display:flex;flex-direction:column;gap:6px}
+.line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px 12px;align-items:center;font-size:.9rem;padding:8px 10px;background:var(--surface-2);border-radius:8px}
+.line .amt{font-family:var(--mono)}
+.total{display:flex;justify-content:space-between;font-weight:700;padding:8px 10px}
+.total .amt{font-family:var(--mono)}
+
+/* timeline */
+.tl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tl>div{border-radius:8px;padding:8px 10px;background:var(--surface-2);font-size:.8rem;min-width:0}
+.tl>div b{display:block;font-size:.85rem}
+.tl>div.on{background:var(--posted-soft);outline:2px solid var(--posted)}
+.tl>div.past{opacity:.6}
+
+/* stars */
+.stars{display:flex;gap:2px}
+.stars button{border:0;background:none;font-size:1.5rem;line-height:1;padding:2px;cursor:pointer;color:var(--line)}
+.stars button.on{color:var(--posted)}
+.star{color:var(--posted)}
+.rq{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* modal */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(8,16,13,.5);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 24px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(12px,env(safe-area-inset-left,0px))}
+.modal{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);width:100%;max-width:660px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.x{border:0;background:var(--surface-2);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.1rem;flex:none}
+.doc{border:1px solid var(--line);border-radius:10px;padding:16px;font-size:.9rem;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.doc h3{font-size:1.05rem}
+.doc ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.sig{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px}
+.sig>div{border:1px dashed var(--line);border-radius:8px;padding:10px;font-size:.85rem}
+.sig .ok{color:var(--ok);font-weight:700}
+.bankid{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:var(--surface-2)}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+
+/* applicants */
+.appl{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.appl.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.appl .tot{font-family:var(--mono);font-weight:600}
+
+/* chart */
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:110px 1fr 44px;gap:10px;align-items:center;font-size:.85rem}
+.bar-track{height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);border-radius:5px}
+
+/* toast */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);z-index:60;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:.9rem;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+pre.code{background:var(--surface-2);border-radius:8px;padding:10px 12px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;margin:0}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.ev{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.ev:first-child{border-top:0}
+.ev .dot{width:9px;height:9px;border-radius:50%;background:var(--line);margin-top:7px;flex:none}
+.ev.new .dot{background:var(--app)}
+.ev>div{min-width:0;flex:1}
+details summary{cursor:pointer;font-weight:600}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+'use strict';
+/* ================= i18n ================= */
+const L={
+demo_badge:['Demo','Demo'],role_clinic:['Clinic','Vårdcentral'],role_doctor:['Doctor','Läkare'],role_ops:['Platform','Plattform'],aria_role:['View as','Visa som'],
+demo_time:['Demo time','Demotid'],u_day:['day','dag'],u_days:['days','dagar'],reset:['Reset demo','Återställ demo'],
+tab_board:['Roster','Schema'],tab_post:['Post shift','Lägg ut pass'],tab_import:['Import roster','Importera schema'],tab_invoices:['Timesheets & invoices','Tidrapporter & fakturor'],tab_doctors:['Doctors','Läkare'],tab_insights:['Insights','Insikter'],tab_inbox:['Inbox','Inkorg'],tab_settings:['Settings','Inställningar'],
+tab_feed:['Shifts for you','Pass för dig'],tab_mine:['My shifts','Mina pass'],tab_earnings:['Earnings','Intäkter'],tab_profile:['Profile & documents','Profil & dokument'],
+tab_checks:['Register checks','Registerkontroller'],tab_queue:['Verification','Verifiering'],tab_trust:['Trust & safety','Trygghet & säkerhet'],tab_about:['About this demo','Om demon'],
+g_spec:['GP specialist','Specialist i allmänmedicin'],g_st:['GP registrar (ST)','ST-läkare i allmänmedicin'],g_lic:['Licensed doctor','Legitimerad läkare'],
+tier1:['Own staff','Egen personal'],tier2:['Alumni','Tidigare anlitade'],tier3:['Open market','Öppen marknad'],
+x_travel:['Travel','Resa'],x_accomm:['Accommodation','Logi'],x_parking:['Parking','Parkering'],x_other:['Other','Övrigt'],x_hours:['Hours worked','Arbetade timmar'],
+intro_title:['Welcome to the Passet demo','Välkommen till Passet-demon'],
+intro_body:['Everything here works on simulated Swedish data. Switch between Clinic, Doctor and Platform at the top, and use the demo clock to move time forward: shifts escalate through the tiers, doctors apply, contracts get signed and invoices come in.','Allt här körs på simulerad svensk data. Byt mellan Vårdcentral, Läkare och Plattform högst upp och använd demotiden för att flytta fram klockan: pass trappas upp genom nivåerna, läkare söker, avtal signeras och fakturor kommer in.'],
+intro_ok:['Got it','Uppfattat'],
+board_title:['Live roster','Live-schema'],board_lede:['Every shift for the next 14 days and where it stands. Tap a shift to act on it.','Alla pass de kommande 14 dagarna och var de står. Tryck på ett pass för att hantera det.'],
+site:['Site','Enhet'],all_sites:['All sites','Alla enheter'],
+risk_title:['{n} shift(s) in the next 48 hours still not filled','{n} pass inom 48 timmar är fortfarande obemannade'],risk_body:['Send them straight to the open market or raise the rate.','Skicka dem direkt till öppna marknaden eller höj arvodet.'],view_first:['Open first','Öppna första'],
+st_coverage:['Covered, next 14 days','Bemannat, 14 dagar'],st_open:['Open shifts','Öppna pass'],st_waiting:['Waiting for your pick','Väntar på ditt val'],st_gaps:['Gaps not yet posted','Luckor ej utlagda'],publish_all:['Publish all','Publicera alla'],
+lg_gap:['Gap, not posted','Lucka, ej utlagd'],lg_posted:['Posted, no applicants','Utlagt, inga sökande'],lg_app:['Applicants waiting','Sökande väntar'],lg_ok:['Confirmed','Bekräftat'],lg_done:['Worked','Genomfört'],lg_bad:['Unfilled','Obemannat'],
+no_shifts:['No shifts','Inga pass'],today:['Today','Idag'],
+lbl_gap:['Gap · not posted','Lucka · ej utlagd'],lbl_tier:['Tier {n} · {name}','Nivå {n} · {name}'],left:['{d} left','{d} kvar'],lbl_apps:['{n} applicant(s)','{n} sökande'],lbl_unsigned:['awaiting signature','väntar på signering'],
+lbl_awaiting_ts:['Worked · timesheet due','Genomfört · tidrapport väntas'],lbl_submitted:['Invoice to approve','Faktura att attestera'],lbl_approved:['Approved · awaiting payment','Attesterad · ej betald'],lbl_paid:['Paid','Betald'],lbl_unfilled:['Unfilled','Obemannat'],lbl_cancelled:['Cancelled','Avbokat'],
+post_title:['Post a shift','Lägg ut ett pass'],post_lede:['Say what you need and when. Passet finds eligible doctors and runs the cascade for you.','Ange vad du behöver och när. Passet hittar behöriga läkare och sköter upptrappningen åt dig.'],
+f_date:['Date','Datum'],f_start:['Start','Start'],f_end:['End','Slut'],f_grade:['Required level','Krävd kompetensnivå'],f_rate:['Hourly rate (SEK)','Timarvode (kr)'],f_notes:['What the doctor should know','Det här behöver läkaren veta'],f_notes_ph:['E.g. drop-in clinic, phone triage, Cosmic login sent the day before','T.ex. drop-in, telefonrådgivning, Cosmic-inlogg skickas dagen innan'],
+f_repeat:['Also post the same shift on the next … weekdays','Lägg även ut samma pass kommande … vardagar'],
+fs_cascade:['Who sees it, and when','Vem ser passet, och när'],f_t1:['Own staff only for (hours)','Endast egen personal i (timmar)'],f_t2:['Then alumni for (hours)','Sedan tidigare anlitade i (timmar)'],f_urgent:['Urgent: go straight to the open market','Brådskande: direkt till öppna marknaden'],f_raise:['Raise rate when it reaches the open market (%)','Höj arvodet när passet når öppna marknaden (%)'],
+fs_rate:['Rate visibility','Synlighet för arvode'],rv_all:['Everyone who can see the shift','Alla som ser passet'],rv_own:['Own staff only','Endast egen personal'],rv_range:['Show as "from" amount','Visa som "från"-belopp'],
+fs_extras:['Extras agreed up front','Ersättningar som gäller från start'],f_travelcap:['Travel reimbursed up to (SEK)','Resa ersätts upp till (kr)'],f_accomm:['Accommodation provided','Logi ingår'],
+post_btn:['Post shift','Lägg ut pass'],posted_ok:['{n} shift(s) posted','{n} pass utlagda'],err_time:['End time must be after start time.','Sluttiden måste vara efter starttiden.'],err_past:['That date has passed. Pick a future date.','Datumet har passerat. Välj ett kommande datum.'],err_rate:['Enter an hourly rate above 0.','Ange ett timarvode över 0.'],
+imp_title:['Import your roster','Importera ert schema'],imp_lede:['Drop in the roster you already have. Passet finds the open shifts and drafts them for you to publish in one go.','Släpp in schemat ni redan har. Passet hittar de obemannade passen och förbereder dem så att du kan publicera allt på en gång.'],
+imp_drop:['Drop an Excel or CSV file here','Släpp en Excel- eller CSV-fil här'],imp_choose:['Choose file','Välj fil'],imp_sample:['Use sample roster','Använd exempelschema'],imp_paste:['…or paste rows from your spreadsheet','…eller klistra in rader från ert kalkylark'],imp_read:['Read pasted rows','Läs inklistrade rader'],
+imp_cols:['Columns we look for (any order, English or Swedish headers):','Kolumner vi letar efter (valfri ordning, svenska eller engelska rubriker):'],imp_gaprule:['A row with no doctor, or "VAKANT", counts as a gap.','En rad utan läkare, eller "VAKANT", räknas som en lucka.'],
+imp_found:['{rows} rows read · {gaps} open shifts found','{rows} rader lästa · {gaps} obemannade pass hittade'],imp_none:['No rows could be read. Check the column headers and try again.','Inga rader kunde läsas. Kontrollera kolumnrubrikerna och försök igen.'],
+imp_covered:['Covered','Bemannat'],imp_gap:['Gap','Lucka'],imp_pastrow:['In the past, skipped','Har passerat, hoppas över'],imp_drafts:['Add {n} gaps as drafts','Lägg till {n} luckor som utkast'],imp_publish:['Publish all {n} now','Publicera alla {n} nu'],imp_into:['Import into','Importera till'],
+imp_done_d:['{n} gaps added to the roster as drafts','{n} luckor tillagda i schemat som utkast'],imp_done_p:['{n} shifts published','{n} pass publicerade'],
+th_date:['Date','Datum'],th_time:['Time','Tid'],th_role:['Level','Nivå'],th_doctor:['Doctor','Läkare'],th_status:['Status','Status'],
+inv_title:['Timesheets & invoices','Tidrapporter & fakturor'],inv_lede:['Agreed hours and extras flow straight from the contract. You only check what was not agreed up front. Payment goes directly from you to the doctor.','Avtalade timmar och ersättningar kommer direkt från avtalet. Du granskar bara det som inte var överenskommet i förväg. Betalningen går direkt från er till läkaren.'],
+inv_review:['To approve','Att attestera'],inv_await:['Approved, awaiting payment','Attesterade, ej betalda'],inv_paid:['Paid','Betalda'],inv_due:['Timesheet not yet submitted','Tidrapport ej inskickad'],inv_none:['Nothing here right now.','Inget här just nu.'],
+ln_agreed:['Agreed in contract','Avtalat'],ln_auto:['Within agreed cap','Inom avtalat tak'],ln_review:['Needs your review','Behöver granskas'],ln_ok:['Approved','Godkänd'],ln_rej:['Rejected','Avvisad'],
+approve:['Approve','Godkänn'],reject:['Reject','Avvisa'],approve_inv:['Approve invoice','Attestera faktura'],approve_ts:['Approve timesheet','Godkänn tidrapport'],send_peppol:['Send to accounts payable (Peppol)','Skicka till leverantörsreskontra (Peppol)'],peppol_sent:['Sent via Peppol {when}','Skickad via Peppol {when}'],mark_paid:['Mark as paid','Markera som betald'],view_inv:['View invoice','Visa faktura'],
+kind_invoice:['Invoice · contractor','Faktura · uppdragstagare'],kind_payroll:['Timesheet · to payroll','Tidrapport · till lön'],total:['Total','Totalt'],due:['Due {when}','Förfaller {when}'],overdue:['Overdue','Förfallen'],
+copy_export:['Copy export for finance','Kopiera export till ekonomi'],copied:['Copied','Kopierat'],copy_fail:['Copy blocked here. Select the text below and copy it.','Kopiering blockerad här. Markera texten nedan och kopiera.'],
+review_left:['Review the flagged line(s) first.','Granska de flaggade raderna först.'],inv_approved:['Invoice approved. Payment due in 30 days.','Fakturan attesterad. Förfaller om 30 dagar.'],ts_approved:['Timesheet approved and sent to payroll.','Tidrapporten godkänd och skickad till lön.'],
+doc_title:['Your doctors','Era läkare'],doc_lede:['Your own staff bank, doctors who have worked for you before, and anyone you have blocked.','Er egen personalpool, läkare som arbetat hos er tidigare och de ni har spärrat.'],
+pool_own:['Own staff bank','Egen personalpool'],pool_alumni:['Alumni (built automatically from completed shifts)','Tidigare anlitade (byggs automatiskt från genomförda pass)'],pool_blocked:['Blocked','Spärrade'],
+worked_here:['{n} shifts here','{n} pass här'],view_profile:['Profile','Profil'],block:['Block','Spärra'],unblock:['Lift block','Häv spärr'],add_own:['Add to own staff','Lägg till i egen personal'],
+invite_title:['Bring your people','Bjud in'],invite_own:['Invite your own doctors to your staff bank','Bjud in era egna läkare till personalpoolen'],invite_clinic:['Invite another clinic: you both get a month free','Bjud in en annan vårdcentral: ni får båda en månad gratis'],copy:['Copy','Kopiera'],
+audit_title:['Block audit log','Spärrlogg'],
+blk_title:['Block {name}','Spärra {name}'],blk_body:['Blocked doctors never see your shifts. A block needs a reason and is confirmed by an admin, so you have a record if it is ever questioned.','Spärrade läkare ser aldrig era pass. En spärr kräver ett skäl och bekräftas av en administratör, så att det finns underlag om den ifrågasätts.'],
+blk_reason:['Reason','Skäl'],r_conduct:['Conduct','Uppförande'],r_no_show:['No-show','Uteblev'],r_fit:['Poor fit for the role','Passade inte för uppdraget'],r_clinical:['Clinical concern','Medicinsk oro'],blk_note:['Note (kept in the audit log)','Anteckning (sparas i loggen)'],
+blk_clinical_hint:['For clinical concerns, also consider whether this should be reported to IVO (Inspektionen för vård och omsorg). Passet cannot do that for you.','Vid medicinsk oro: överväg även om det ska anmälas till IVO. Passet kan inte göra det åt er.'],
+blk_request:['Request block','Begär spärr'],blk_pending:['Awaiting admin approval','Väntar på godkännande'],blk_approve:['Approve as admin (Per Sandberg)','Godkänn som admin (Per Sandberg)'],blk_active:['Active since {when}','Aktiv sedan {when}'],
+blk_requested:['Block requested. An admin needs to approve it.','Spärr begärd. En administratör behöver godkänna den.'],blk_done:['Block approved','Spärr godkänd'],blk_lifted:['Block lifted','Spärren hävd'],
+a_requested:['{by} requested a block on {name} ({reason})','{by} begärde spärr av {name} ({reason})'],a_approved:['{by} approved the block on {name}','{by} godkände spärren av {name}'],a_lifted:['{by} lifted the block on {name}','{by} hävde spärren av {name}'],
+ins_title:['Insights','Insikter'],ins_lede:['The last 8 weeks across your sites. Use these figures when you report savings to finance.','De senaste 8 veckorna för era enheter. Använd siffrorna när ni redovisar besparingar för ekonomi.'],
+ins_fill:['Fill rate','Bemanningsgrad'],ins_ttf:['Median time to fill','Mediantid till bemannat'],ins_shifts:['Shifts filled','Bemannade pass'],ins_save:['Est. saved vs agency','Uppsk. besparing mot bemanningsbolag'],ins_cps:['Subscription cost per filled shift','Abonnemangskostnad per bemannat pass'],
+ins_weekly:['Filled and unfilled shifts per week','Bemannade och obemannade pass per vecka'],ins_tier:['Where filled shifts came from','Var bemannade pass kom ifrån'],ins_assume:['Assumes an agency markup of {p}% on the same hourly spend (change in Settings).','Antar ett påslag på {p}% hos bemanningsbolag på samma timkostnad (ändra under Inställningar).'],
+ins_filled:['Filled','Bemannat'],ins_unfilled:['Unfilled','Obemannat'],wk:['Wk','v.'],ins_spend:['Hourly spend through Passet','Timkostnad via Passet'],
+inbox_title:['Inbox','Inkorg'],inbox_empty:['No notifications yet. Move the demo clock forward to see activity.','Inga notiser än. Flytta fram demotiden för att se aktivitet.'],open:['Open','Öppna'],
+set_title:['Settings','Inställningar'],set_lede:['Defaults for every new shift. You can override them per shift.','Standardval för nya pass. Kan ändras per pass.'],
+fs_plan:['Subscription','Abonnemang'],plan_bank:['Staff bank: own staff and alumni tiers','Personalpool: egen personal och tidigare anlitade'],plan_network:['Bank + Network: adds the open market','Pool + Nätverk: lägger till öppna marknaden'],plan_price:['{p} per site and month · no cost per shift, no markup','{p} per enhet och månad · ingen kostnad per pass, inget påslag'],plan_note:['Example pricing for the demo.','Exempelpriser för demon.'],
+fs_terms:['Contract terms','Avtalsvillkor'],f_model:['External doctors are engaged as','Externa läkare anlitas som'],m_contractor:['Contractor with F-tax (uppdragsavtal)','Uppdragstagare med F-skatt (uppdragsavtal)'],m_employee:['Hourly fixed-term employee (timanställning)','Timanställd (tidsbegränsad anställning)'],
+f_cancelh:['Late cancellation window (hours)','Gräns för sen avbokning (timmar)'],f_cancelpct:['Paid to doctor if you cancel late (%)','Ersättning till läkaren vid sen avbokning från er (%)'],f_agency:['Agency markup used in Insights (%)','Bemanningspåslag i Insikter (%)'],save:['Save','Spara'],saved:['Saved','Sparat'],
+feed_title:['Shifts for you','Pass för dig'],feed_lede:['Only shifts you are eligible for, inside your radius, on days you are available.','Bara pass du är behörig för, inom din radie, de dagar du är tillgänglig.'],
+viewing_as:['Viewing as','Visa som'],rel_own:['own staff at Norrhälsan','egen personal hos Norrhälsan'],rel_alumni:['has worked for Norrhälsan before','har arbetat hos Norrhälsan tidigare'],rel_open:['new to Norrhälsan','ny hos Norrhälsan'],new_signup:['New doctor sign-up','Ny läkare, registrering'],
+feed_none:['No open shifts match you right now. Move the demo clock forward, or widen your radius in Profile.','Inga öppna pass matchar dig just nu. Flytta fram demotiden eller öka din radie under Profil.'],
+hidden_title:['{n} shift(s) not shown to you','{n} pass visas inte för dig'],opens_in:['opens to you in {d}','öppnar för dig om {d}'],
+why_unverified:['Your account is not verified yet','Ditt konto är inte verifierat än'],why_blocked:['Not available','Ej tillgängligt'],why_grade:['Needs a different level','Kräver annan kompetensnivå'],why_docs:['A document of yours expires before the shift','Ett av dina dokument går ut före passet'],why_radius:['Outside your travel radius','Utanför din reseradie'],why_tier:['Not open to you yet','Inte öppet för dig än'],why_avail:['On a day you marked unavailable','En dag du markerat som upptagen'],why_rate:['Below your minimum rate','Under ditt lägsta timarvode'],why_overlap:['Clashes with a shift you have booked','Krockar med ett pass du har bokat'],
+tag_own:['You see this first: own staff','Du ser detta först: egen personal'],tag_alumni:['Early access: you have worked here','Tidig tillgång: du har arbetat här'],tag_open:['Open to all eligible doctors','Öppet för alla behöriga läkare'],tag_urgent:['Urgent','Brådskande'],
+tag_travel:['Travel up to {a}','Resa upp till {a}'],tag_accomm:['Accommodation included','Logi ingår'],
+per_h:['/h','/tim'],from:['from','från'],rate_hidden:['Rate shown to own staff','Arvode visas för egen personal'],rate_after:['Rate on request','Arvode på förfrågan'],
+accept:['Accept','Tacka ja'],accept_req:['Accept with request','Tacka ja med önskemål'],applied:['Applied · waiting for the clinic','Ansökt · väntar på vårdcentralen'],withdraw:['Withdraw','Dra tillbaka'],
+applied_ok:['Sent. The clinic gets it straight away.','Skickat. Vårdcentralen får det direkt.'],withdrawn:['Withdrawn','Tillbakadraget'],
+req_title:['Accept with a request','Tacka ja med önskemål'],req_body:['One request, decided when the clinic confirms. Keep it to what you need to make the shift work.','Ett önskemål, som avgörs när vårdcentralen bekräftar. Begär det du behöver för att passet ska fungera.'],
+req_type:['What do you need?','Vad behöver du?'],req_amount:['Amount (SEK)','Belopp (kr)'],req_note:['Short note','Kort kommentar'],req_note_ph:['E.g. 2 × 75 km by car, milersättning 25 kr/mil','T.ex. 2 × 75 km bil, milersättning 25 kr/mil'],req_send:['Accept and send request','Tacka ja och skicka önskemål'],err_amount:['Enter an amount above 0.','Ange ett belopp över 0.'],
+policy_cap:['This clinic reimburses travel up to {a} without asking.','Vårdcentralen ersätter resa upp till {a} utan förfrågan.'],
+rated:['Clinic rating','Betyg för vårdcentralen'],rating_new:['New on Passet: ratings show after 5 shifts','Ny på Passet: betyg visas efter 5 pass'],would_rebook:['would book again','skulle boka igen'],would_return:['would work here again','skulle jobba här igen'],
+mine_title:['My shifts','Mina pass'],mine_lede:['Contracts to sign, upcoming shifts, timesheets and ratings in one place.','Avtal att signera, kommande pass, tidrapporter och betyg på ett ställe.'],
+m_sign:['Contracts to sign','Avtal att signera'],m_upcoming:['Upcoming','Kommande'],m_ts:['Timesheet due','Tidrapport att skicka'],m_applied:['Waiting for the clinic','Väntar på vårdcentralen'],m_rate:['Rate your shift','Betygsätt passet'],m_none:['Nothing here.','Inget här.'],
+sign_contract:['Read and sign','Läs och signera'],submit_ts:['Submit timesheet','Skicka tidrapport'],rate_now:['Rate','Betygsätt'],cancel_shift:['Cancel','Avboka'],
+lg_addr:['Address','Adress'],lg_contact:['Contact','Kontakt'],lg_parking:['Parking','Parkering'],lg_ehr:['Records system','Journalsystem'],lg_ehr_v:['{s}: login sent the day before','{s}: inlogg skickas dagen innan'],lg_induct:['Induction','Introduktion'],lg_induct_v:['Induction pack and local routines in the app 48 h before','Introduktionspaket och lokala rutiner i appen 48 tim innan'],
+ts_title:['Timesheet for {site}','Tidrapport för {site}'],ts_body:['Hours and agreed extras are filled in from your contract. Add anything else here; the clinic reviews only those lines.','Timmar och avtalade ersättningar är ifyllda från avtalet. Lägg till annat här; vårdcentralen granskar bara de raderna.'],
+ts_add:['Add a line','Lägg till rad'],ts_receipt:['Receipt attached','Kvitto bifogat'],ts_submit_inv:['Generate and send invoice','Skapa och skicka faktura'],ts_submit_pay:['Send timesheet to payroll','Skicka tidrapport till lön'],ts_sent:['Sent. You can follow it under Earnings.','Skickat. Du följer den under Intäkter.'],remove:['Remove','Ta bort'],
+earn_title:['Earnings','Intäkter'],earn_lede:['Every invoice and timesheet you have sent through Passet. The clinic pays you directly.','Alla fakturor och tidrapporter du skickat via Passet. Vårdcentralen betalar dig direkt.'],
+e_paid:['Paid this year','Betalt i år'],e_approved:['Approved, not yet paid','Attesterat, ej betalt'],e_submitted:['Waiting for approval','Väntar på attest'],e_overdue:['Overdue','Förfallet'],
+st_submitted:['Waiting for approval','Väntar på attest'],st_approved:['Approved','Attesterad'],st_paid:['Paid {when}','Betald {when}'],
+prof_title:['Profile & documents','Profil & dokument'],prof_lede:['Clinics see this when you apply. Your licence comes straight from the national register, so nobody needs to retype it.','Vårdcentralerna ser detta när du söker. Din legitimation hämtas direkt från registret, så ingen behöver skriva in den.'],
+p_register:['Licence','Legitimation'],p_verified:['Verified','Verifierad'],p_pending:['Pending verification','Väntar på verifiering'],p_suspended:['Suspended','Avstängd'],p_checked:['Checked against Socialstyrelsen\'s HOSP register {when} (simulated)','Kontrollerad mot Socialstyrelsens HOSP-register {when} (simulerat)'],
+p_legit:['Licence no.','Legitimationsnr'],p_years:['Years since licence','År sedan legitimation'],p_langs:['Languages','Språk'],p_ehr:['Records systems','Journalsystem'],
+p_passport:['Document passport','Dokumentpass'],p_passport_body:['Upload once, valid at every clinic on Passet. We remind you before anything expires.','Ladda upp en gång, gäller hos alla vårdcentraler på Passet. Vi påminner innan något går ut.'],
+doc_legit:['Licence to practise (from register)','Legitimation (från registret)'],doc_spec:['Specialist certificate','Specialistbevis'],doc_liab:['Liability insurance','Ansvarsförsäkring'],doc_cpr:['CPR certificate (HLR)','HLR-intyg'],doc_fskatt:['F-tax approval','Godkänd för F-skatt'],doc_id:['ID checked with BankID','ID kontrollerat med BankID'],
+d_valid:['Valid','Giltigt'],d_valid_to:['Valid to {when}','Giltigt till {when}'],d_expiring:['Expires in {d}','Går ut om {d}'],d_expired:['Expired','Utgånget'],d_upload:['Upload new','Ladda upp ny'],d_uploaded:['Document updated (demo: valid one more year)','Dokument uppdaterat (demo: giltigt ett år till)'],
+p_prefs:['Where and when you work','Var och när du jobbar'],p_base:['Home base','Utgångsort'],p_radius:['Notify me about shifts within','Meddela mig om pass inom'],p_minrate:['Minimum hourly rate (SEK)','Lägsta timarvode (kr)'],p_avail:['Days I am available','Dagar jag kan jobba'],p_quiet:['Quiet hours (no notifications)','Tyst tid (inga notiser)'],
+p_ratings:['Your rating from clinics','Ditt betyg från vårdcentraler'],p_refer:['Invite a colleague','Bjud in en kollega'],p_refer_body:['Colleagues who join with your code get priority alerts for their first month, and so do you.','Kollegor som ansluter med din kod får förtur till notiser första månaden, och det får du också.'],
+wd:[['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],['Sön','Mån','Tis','Ons','Tor','Fre','Lör']],
+chk_title:['Register checks','Registerkontroller'],chk_lede:['Every doctor is checked against the national register at sign-up, every night, and again at the moment a shift is confirmed.','Alla läkare kontrolleras mot registret vid registrering, varje natt och igen när ett pass bekräftas.'],
+chk_run:['Run nightly check now','Kör nattlig kontroll nu'],chk_log:['Check log','Kontrollogg'],chk_src_se:['Sweden: Socialstyrelsen HOSP register. Direct access is today given to public care providers; a platform needs Socialstyrelsen\'s approval. Until then: the doctor\'s official licence certificate plus manual confirmation.','Sverige: Socialstyrelsens HOSP-register. Direktåtkomst ges i dag till offentliga vårdgivare; en plattform behöver Socialstyrelsens godkännande. Till dess: läkarens officiella intyg om legitimation plus manuell kontroll.'],
+chk_src_au:['Australia: Ahpra Practitioner Information Exchange (PIE) offers an API to approved organisations under a data usage agreement.','Australien: Ahpras Practitioner Information Exchange (PIE) erbjuder ett API till godkända organisationer med dataavtal.'],
+chk_ok:['{n} doctors checked · all verified','{n} läkare kontrollerade · alla verifierade'],chk_flag:['{n} doctors checked · {f} flagged and suspended','{n} läkare kontrollerade · {f} flaggade och avstängda'],chk_revoked:['{name}: licence revoked in register. Suspended, all applications withdrawn.','{name}: legitimationen återkallad i registret. Avstängd, alla ansökningar återtagna.'],
+th_last:['Last check','Senaste kontroll'],
+q_title:['Verification queue','Verifieringskö'],q_lede:['Doctors whose licence could not be confirmed automatically.','Läkare vars legitimation inte kunde bekräftas automatiskt.'],q_none:['Queue is empty.','Kön är tom.'],
+q_items:['Uploaded: licence certificate (Intyg om legitimation, PDF) · BankID identity: matches · Register: needs manual confirmation','Uppladdat: Intyg om legitimation (PDF) · BankID-identitet: stämmer · Register: kräver manuell kontroll'],
+q_approve:['Confirm and verify','Bekräfta och verifiera'],q_reject:['Reject','Avvisa'],q_done:['{name} verified','{name} verifierad'],q_rejected:['{name} rejected','{name} avvisad'],
+q_expiring:['Documents expiring within 30 days','Dokument som går ut inom 30 dagar'],q_remind:['Send reminder','Skicka påminnelse'],q_reminded:['Reminder sent','Påminnelse skickad'],
+tr_title:['Trust & safety','Trygghet & säkerhet'],tr_lede:['The exceptions that still need a person: disputes, no-shows, late cancellations and blocks.','Undantagen som fortfarande kräver en människa: tvister, uteblivna pass, sena avbokningar och spärrar.'],
+tr_blocks:['Blocks awaiting approval','Spärrar som väntar på godkännande'],tr_disputes:['Rejected invoice lines','Avvisade fakturarader'],tr_cancels:['Late cancellations','Sena avbokningar'],tr_concerns:['Private clinical concerns','Privata medicinska anmälningar'],tr_none:['None','Inga'],
+ab_title:['About this demo','Om demon'],ab_body:['Passet connects vårdcentraler directly with GPs. Clinics pay a flat subscription; doctors use it free; pay, tax and invoicing go straight between the doctor and the clinic.','Passet kopplar ihop vårdcentraler direkt med allmänläkare. Vårdcentralen betalar ett fast abonnemang; läkare använder det gratis; lön, skatt och fakturering sker direkt mellan läkaren och vårdcentralen.'],
+ab_works:['Working in this demo','Fungerar i demon'],ab_sim:['Simulated, needs agreements to go live','Simulerat, kräver avtal för att gå live'],
+ab_w:[['Posting shifts, the three-tier cascade with timers, urgent and auto rate raise','Roster import from Excel or CSV, live roster board, 48-hour risk alerts','Eligibility: level, radius, availability, documents, minimum rate, clashes, blocks','Accept or accept with request; clinic compares total cost and confirms','Contract generated from the shift; timesheet and invoice generated from the contract','Two-way blind ratings, blocks with admin approval and audit log, private clinical concerns','Insights, inbox notifications, document expiry reminders, referrals, English and Swedish'],['Lägga ut pass, upptrappning i tre nivåer med timer, brådskande och automatisk arvodeshöjning','Schemaimport från Excel eller CSV, live-schema, riskvarning inom 48 timmar','Behörighet: nivå, radie, tillgänglighet, dokument, lägsta arvode, krockar, spärrar','Tacka ja eller tacka ja med önskemål; vårdcentralen jämför totalkostnad och bekräftar','Avtal skapas från passet; tidrapport och faktura skapas från avtalet','Ömsesidiga dolda betyg, spärrar med godkännande och logg, privata medicinska anmälningar','Insikter, notiser, påminnelser om dokument, värvning, svenska och engelska']],
+ab_s:[['BankID signing and identification (needs an e-signing provider agreement)','Live register checks (needs Socialstyrelsen approval; Ahpra PIE for Australia)','Peppol e-invoicing (needs an access point provider)','Push and SMS notifications (needs the app published and a messaging provider)','Live rostering system integrations (needs vendor agreements)','Data is stored only in this browser. Reset any time below.'],['BankID-signering och identifiering (kräver avtal med e-signeringsleverantör)','Registerkontroller i realtid (kräver godkännande från Socialstyrelsen; Ahpra PIE för Australien)','Peppol-fakturering (kräver en accesspunkt)','Push- och SMS-notiser (kräver publicerad app och SMS-leverantör)','Integrationer mot schemasystem (kräver avtal med leverantörer)','Data sparas bara i den här webbläsaren. Återställ när som helst nedan.']],
+ab_reset_body:['Puts every shift, doctor and the clock back to the starting point.','Återställer alla pass, läkare och klockan till startläget.'],reset_done:['Demo reset','Demon återställd'],
+md_close:['Close','Stäng'],md_cancel:['Cancel','Avbryt'],md_back:['Back','Tillbaka'],md_next:['Next','Nästa'],
+sh_posted:['Posted {when}','Utlagt {when}'],sh_hours:['{h} h','{h} tim'],sh_cascade:['Cascade','Upptrappning'],sh_now:['now','nu'],sh_after:['after {d}','efter {d}'],sh_from_start:['from start','från start'],
+sh_apps:['Applicants','Sökande'],sh_noapps:['No applicants yet. Eligible doctors in the current tier have been notified.','Inga sökande än. Behöriga läkare i nuvarande nivå har fått notis.'],
+sh_dist:['≈{k} km away','≈{k} km bort'],sh_req:['Requests {type}: {a}','Önskar {type}: {a}'],sh_req_ok:['Approve this request','Godkänn önskemålet'],sh_total:['Total cost','Totalkostnad'],sh_pick:['Pick','Välj'],sh_confirm:['Confirm {name}','Bekräfta {name}'],
+sh_escalate:['Send to open market now','Skicka till öppna marknaden nu'],sh_raise:['Raise rate 10%','Höj arvodet 10%'],sh_cancel:['Cancel shift','Avboka pass'],sh_publish:['Publish with defaults','Publicera med standardval'],
+sh_escalated:['Now open to every eligible doctor','Nu öppet för alla behöriga läkare'],sh_raised:['Rate raised to {r}','Arvodet höjt till {r}'],sh_published:['Published. Own staff are notified first.','Publicerat. Egen personal får notis först.'],
+sh_cancelled:['Shift cancelled','Passet avbokat'],sh_late_note:['This is inside the {h}-hour window. Under the contract, {p}% of booked hours ({a}) is payable to the doctor.','Detta är inom {h}-timmarsgränsen. Enligt avtalet ska {p}% av bokade timmar ({a}) betalas till läkaren.'],sh_cancel_confirm:['Yes, cancel','Ja, avboka'],
+sh_doc_cancel_note:['Cancelling inside {h} hours is logged as a late cancellation and affects your reliability record. The clinic is notified and the shift goes straight to the open market.','Avbokning inom {h} timmar registreras som sen avbokning och påverkar din pålitlighet. Vårdcentralen får besked och passet går direkt ut på öppna marknaden.'],
+sh_doc_cancel_ok:['Shift cancelled and re-posted for the clinic','Passet avbokat och utlagt igen åt vårdcentralen'],
+sh_contract:['Contract','Avtal'],sh_signed_both:['Signed by both parties','Signerat av båda parter'],sh_signed_clinic:['Signed by you · waiting for the doctor','Signerat av er · väntar på läkaren'],view_contract:['View contract','Visa avtal'],
+sh_ts_wait:['Waiting for the doctor\'s timesheet.','Väntar på läkarens tidrapport.'],go_invoices:['Go to invoices','Till fakturor'],rate_doctor:['Rate {name}','Betygsätt {name}'],
+ct_title_c:['Assignment agreement (uppdragsavtal)','Uppdragsavtal'],ct_title_e:['Fixed-term hourly employment (timanställning)','Tidsbegränsad timanställning'],ct_parties:['Parties','Parter'],ct_clinic:['Care provider','Vårdgivare'],ct_doctor:['Doctor','Läkare'],ct_assign:['Assignment','Uppdrag'],ct_fee:['Fee','Ersättning'],ct_terms:['Terms','Villkor'],
+ct_t1:['The doctor works under the care provider\'s medical responsibility and local routines, and is bound by confidentiality under the Patient Safety Act (2010:659).','Läkaren arbetar under vårdgivarens medicinska ansvar och lokala rutiner och omfattas av tystnadsplikt enligt patientsäkerhetslagen (2010:659).'],
+ct_t2:['Cancellation by either party less than {h} hours before start is a late cancellation. If the care provider cancels late, {p}% of booked hours is payable.','Avbokning från någon part senare än {h} timmar före start är en sen avbokning. Avbokar vårdgivaren sent ska {p}% av bokade timmar betalas.'],
+ct_t3c:['The doctor invoices the care provider after the shift via Passet. Payment is made directly to the doctor within 30 days. The doctor holds F-tax approval and handles their own tax and social charges.','Läkaren fakturerar vårdgivaren efter passet via Passet. Betalning sker direkt till läkaren inom 30 dagar. Läkaren är godkänd för F-skatt och betalar själv skatt och avgifter.'],
+ct_t3e:['Hours are reported via Passet and paid through the care provider\'s payroll, with tax deducted, on the next pay date.','Timmar rapporteras via Passet och betalas via vårdgivarens lönesystem, med skatteavdrag, på nästa löneutbetalning.'],
+ct_t4:['Passet provides the platform only and is not a party to this agreement or to any payment.','Passet tillhandahåller endast plattformen och är inte part i avtalet eller i någon betalning.'],
+ct_sign_clinic:['Sign with BankID','Signera med BankID'],ct_signed_by:['Signed {when} by {name}','Signerat {when} av {name}'],ct_waiting:['Waiting for signature','Väntar på signering'],ct_demo:['Demo contract and simulated BankID. The template must be approved by a lawyer before real use.','Demoavtal och simulerat BankID. Mallen ska godkännas av jurist före skarp användning.'],
+bankid_start:['Opening BankID…','Öppnar BankID…'],bankid_done:['Signed','Signerat'],confirm_sign:['Confirm and sign','Bekräfta och signera'],confirmed_ok:['{name} confirmed. Contract sent for signature.','{name} bekräftad. Avtalet skickat för signering.'],signed_ok:['Contract signed','Avtalet signerat'],
+est_total:['Estimated total','Beräknat totalt'],
+rt_title_d:['Rate {name}','Betygsätt {name}'],rt_title_c:['Rate {site}','Betygsätt {site}'],rt_blind:['Ratings are blind: neither side sees the other\'s until both have rated, or 14 days have passed.','Betygen är dolda: ingen part ser den andras förrän båda har betygsatt, eller efter 14 dagar.'],
+q_punct:['Punctuality and reliability','Punktlighet och pålitlighet'],q_prof:['Professionalism','Professionalitet'],q_fit:['Fit for the role','Passade för uppdraget'],q_rebook:['Would you book this doctor again?','Skulle ni boka läkaren igen?'],
+q_induct:['Induction and handover','Introduktion och överlämning'],q_load:['Workload as advertised','Arbetsbelastning som utlovat'],q_treat:['How you were treated','Hur du blev bemött'],q_paid:['Paid on time','Betalt i tid'],q_return:['Would you work here again?','Skulle du jobba här igen?'],
+yes:['Yes','Ja'],no:['No','Nej'],rt_comment:['Comment (optional)','Kommentar (valfritt)'],rt_send:['Submit rating','Skicka betyg'],rt_need:['Give every question a score first.','Ge alla frågor ett betyg först.'],rt_done:['Thanks. Rating saved.','Tack. Betyget sparat.'],
+rt_yours:['Your rating: submitted','Ditt betyg: inskickat'],rt_theirs_hidden:['Their rating: hidden until both have rated','Deras betyg: dolt tills båda betygsatt'],rt_theirs:['Their rating: {s}','Deras betyg: {s}'],
+concern_link:['Clinical concern? Report it privately','Medicinsk oro? Anmäl privat'],concern_title:['Private clinical concern','Privat medicinsk anmälan'],concern_body:['This never appears in ratings. It goes to your medical director, who decides on next steps, including whether to report to IVO.','Detta syns aldrig i betygen. Det går till er medicinskt ansvarige, som beslutar om nästa steg, inklusive om det ska anmälas till IVO.'],concern_send:['Send privately','Skicka privat'],concern_done:['Sent to the medical director','Skickat till medicinskt ansvarig'],
+pf_title:['Doctor profile','Läkarprofil'],
+su_title:['Join Passet as a doctor','Gå med i Passet som läkare'],su_s1:['Identify yourself','Identifiera dig'],su_s1_body:['We use BankID to confirm who you are. Your name comes from BankID, so it always matches your licence.','Vi använder BankID för att bekräfta vem du är. Namnet hämtas från BankID och stämmer därför alltid med legitimationen.'],
+su_name:['Name (from BankID)','Namn (från BankID)'],su_bankid:['Identify with BankID','Legitimera med BankID'],su_s2:['Your licence','Din legitimation'],su_legit:['Licence number (6 digits)','Legitimationsnummer (6 siffror)'],su_check:['Check register','Kontrollera registret'],
+su_found:['Found in register: licensed doctor, no restrictions. (Simulated: numbers ending in 0 are not found.)','Hittad i registret: legitimerad läkare, inga begränsningar. (Simulerat: nummer som slutar på 0 hittas inte.)'],su_notfound:['Not found automatically. Upload your licence certificate and our team will confirm it, usually the same day.','Hittades inte automatiskt. Ladda upp ditt intyg om legitimation så kontrollerar vi det, oftast samma dag.'],
+su_upload:['Upload licence certificate (PDF)','Ladda upp intyg om legitimation (PDF)'],su_s3:['How you work','Hur du jobbar'],su_done:['Create my profile','Skapa min profil'],su_welcome:['Welcome, {name}. Your shift feed is ready.','Välkommen, {name}. Ditt pass-flöde är klart.'],su_queued:['Profile created. Verification is pending; you will see shifts once confirmed.','Profil skapad. Verifiering pågår; du ser pass när den är klar.'],
+err_name:['Enter your name.','Ange ditt namn.'],err_legit:['Enter the 6-digit licence number.','Ange det sexsiffriga legitimationsnumret.'],
+ev_applied:['{name} applied for {when}','{name} sökte passet {when}'],ev_unfilled:['Shift {when} went unfilled','Passet {when} blev obemannat'],ev_signed:['{name} signed the contract for {when}','{name} signerade avtalet för {when}'],ev_submitted:['{name} submitted {kind} for {when}','{name} skickade {kind} för {when}'],
+ev_new_shift:['New shift for you: {site}, {when}','Nytt pass för dig: {site}, {when}'],ev_confirmed:['Confirmed: {site}, {when}. Sign the contract.','Bekräftad: {site}, {when}. Signera avtalet.'],ev_not_sel:['{site} picked another doctor for {when}','{site} valde en annan läkare för {when}'],ev_ts_due:['Shift done at {site}. Submit your timesheet.','Pass klart på {site}. Skicka din tidrapport.'],
+ev_approved:['{site} approved your invoice {no}','{site} attesterade din faktura {no}'],ev_paid:['{site} marked invoice {no} as paid','{site} markerade faktura {no} som betald'],ev_cancel_c:['{site} cancelled your shift {when}','{site} avbokade ditt pass {when}'],ev_cancel_d:['{name} cancelled {when}. Re-posted to the open market.','{name} avbokade {when}. Utlagt igen på öppna marknaden.'],
+ev_doc_remind:['Your {doc} expires {when}. Upload a new one to keep receiving shifts.','Din {doc} går ut {when}. Ladda upp en ny för att fortsätta få pass.'],ev_suspended:['{name} was suspended after the register check','{name} stängdes av efter registerkontrollen'],
+k_invoice:['an invoice','en faktura'],k_timesheet:['a timesheet','en tidrapport'],
+adv_toast:['Clock moved to {when}','Klockan flyttad till {when}'],
+pending_ops:['{n} waiting','{n} väntar'],
+x_label:['×','×']
+};
+const LS='passet-demo-v1',H=36e5,DAY=864e5,TZ='Europe/Stockholm',OWN='o1';
+let S,M=null;
+const $=s=>document.querySelector(s);
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function li(){return S&&S.lang==='sv'?1:0}
+function t(k,v){const e=L[k];let s=e?e[li()]:k;if(v)for(const x in v)s=s.split('{'+x+'}').join(esc(v[x]));return s}
+function tl(k){return L[k][li()]}
+function tx(o){return o==null?'':typeof o==='string'?o:(o[S.lang]||o.en||'')}
+
+/* ================= dates ================= */
+function lastSun(y,m){const d=new Date(Date.UTC(y,m+1,0));return d.getUTCDate()-d.getUTCDay()}
+function isDST(ds){const [y,m,d]=ds.split('-').map(Number);if(m<3||m>10)return false;if(m>3&&m<10)return true;return m===3?d>=lastSun(y,2):d<lastSun(y,9)}
+function at(ds,hm){return Date.parse(ds+'T'+hm+':00'+(isDST(ds)?'+02:00':'+01:00'))}
+function addD(ds,n){const [y,m,d]=ds.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10)}
+const FC={};
+function F(k,o,l){l=l||loc();const key=k+l;return FC[key]||(FC[key]=new Intl.DateTimeFormat(l,Object.assign({timeZone:TZ},o)))}
+function loc(){return S.lang==='sv'?'sv-SE':'en-GB'}
+function dstr(ms){const p=F('iso',{year:'numeric',month:'2-digit',day:'2-digit'},'en-CA').formatToParts(ms);const g=n=>p.find(x=>x.type===n).value;return g('year')+'-'+g('month')+'-'+g('day')}
+function fDay(ms){return F('day',{weekday:'short',day:'numeric',month:'short'}).format(ms)}
+function fDayLong(ms){return F('dl',{weekday:'long',day:'numeric',month:'long'}).format(ms)}
+function fDate(ms){return F('dd',{day:'numeric',month:'short',year:'numeric'}).format(ms)}
+function fTime(ms){return F('tm',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'},'sv-SE').format(ms)}
+function fDT(ms){return fDay(ms)+' '+fTime(ms)}
+function wdOf(ms){return new Date(dstr(ms)+'T12:00:00Z').getUTCDay()}
+function sod(ms){return at(dstr(ms),'00:00')}
+function money(n){return new Intl.NumberFormat(loc(),{maximumFractionDigits:0}).format(Math.round(n))+' kr'}
+function num(n,d){d=d||0;return new Intl.NumberFormat(loc(),{maximumFractionDigits:d,minimumFractionDigits:d}).format(n)}
+function dur(ms){ms=Math.max(0,ms);const h=Math.floor(ms/H),m=Math.round((ms%H)/6e4);if(h>=48)return Math.round(h/24)+' '+tl('u_days');if(h)return h+' h'+(m?' '+m+' min':'');return Math.max(1,m)+' min'}
+function isoWeek(ds){const d=new Date(ds+'T12:00:00Z');const day=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-day+3);const fy=new Date(Date.UTC(d.getUTCFullYear(),0,4));return 1+Math.round(((d-fy)/DAY-3+((fy.getUTCDay()+6)%7))/7)}
+
+/* ================= geo ================= */
+const CITIES={'Sundsvall':[62.391,17.306],'Timrå':[62.487,17.326],'Härnösand':[62.632,17.938],'Kramfors':[62.931,17.783],'Sollefteå':[63.167,17.270],'Örnsköldsvik':[63.290,18.716],'Östersund':[63.176,14.636],'Hudiksvall':[61.729,17.104],'Gävle':[60.675,17.141],'Umeå':[63.826,20.263],'Uppsala':[59.858,17.639],'Stockholm':[59.329,18.069]};
+function kmC(a,b){const A=CITIES[a],B=CITIES[b];if(!A||!B)return 9999;const r=Math.PI/180,dLa=(B[0]-A[0])*r,dLo=(B[1]-A[1])*r;const x=Math.sin(dLa/2)**2+Math.cos(A[0]*r)*Math.cos(B[0]*r)*Math.sin(dLo/2)**2;return Math.round(6371*2*Math.asin(Math.sqrt(x))*1.2)}
+const GR={gp_spec:3,gp_st:2,licensed:1},GK={gp_spec:'g_spec',gp_st:'g_st',licensed:'g_lic'};
+
+/* ================= seed ================= */
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function seed(){
+  const base='2026-10-23',D=(o,hm)=>at(addD(base,o),hm),clock=D(0,'13:00');
+  const Y=n=>D(n,'12:00');
+  const docsFull=(liab,cpr,spec)=>[{k:'doc_id',exp:null},{k:'doc_legit',exp:null}].concat(spec?[{k:'doc_spec',exp:null}]:[]).concat([{k:'doc_liab',exp:liab},{k:'doc_cpr',exp:cpr},{k:'doc_fskatt',exp:null}]);
+  const dr=(id,name,grade,city,radius,minRate,o)=>Object.assign({id,name,grade,city,radius,minRate,status:'verified',legit:String(410000+id.length*7919+id.charCodeAt(1)*131).slice(0,6),years:8,langs:['sv','en'],ehr:['Cosmic'],avail:[1,2,3,4,5],quiet:['22:00','07:00'],docs:docsFull(Y(300),Y(400),grade==='gp_spec'),rating:{n:12,avg:4.6,rebook:92},lastCheck:D(0,'03:00')},o||{});
+  const doctors=[
+    dr('d1','Sara Lindqvist','gp_spec','Härnösand',150,1000,{years:12,avail:[1,2,3,4,5,6],ehr:['Cosmic','TakeCare'],rating:{n:31,avg:4.8,rebook:97},legit:'418204'}),
+    dr('d2','Johan Berg','gp_spec','Sundsvall',60,1050,{years:15,rating:{n:44,avg:4.7,rebook:95},legit:'402917'}),
+    dr('d3','Amira Haddad','gp_st','Timrå',90,950,{years:4,langs:['sv','en','ar'],rating:{n:9,avg:4.5,rebook:89},legit:'433561'}),
+    dr('d4','Per Nyström','gp_spec','Östersund',320,1100,{years:22,ehr:['Cosmic','Melior'],rating:{n:58,avg:4.4,rebook:88},legit:'391044'}),
+    dr('d5','Lina Karlsson','licensed','Sundsvall',40,900,{years:2,docs:docsFull(Y(200),Y(250),false),rating:{n:6,avg:4.3,rebook:83},legit:'447802'}),
+    dr('d6','Mattias Holm','gp_spec','Umeå',420,1200,{years:10,langs:['sv','en','fi'],rating:{n:3,avg:5,rebook:100},legit:'420375'}),
+    dr('d7','Fatima Ali','gp_spec','Gävle',260,1100,{years:9,langs:['sv','en','so'],rating:{n:17,avg:4.6,rebook:94},legit:'425590'}),
+    dr('d8','Oskar Wikström','gp_st','Kramfors',130,950,{years:5,rating:{n:7,avg:4.2,rebook:86},legit:'439118'}),
+    dr('d9','Helena Strand','gp_spec','Uppsala',520,1150,{years:18,docs:docsFull(Y(9),Y(120),true),rating:{n:26,avg:4.5,rebook:92},legit:'398863'}),
+    dr('d10','Daniel Öberg','gp_spec','Hudiksvall',220,1050,{years:14,registerFlag:'revoked',rating:{n:21,avg:3.9,rebook:71},legit:'405521'}),
+    dr('d11','Maria Sundberg','gp_spec','Stockholm',600,1200,{status:'pending',years:11,rating:{n:0,avg:0,rebook:0},legit:'412270',lastCheck:null}),
+    dr('d12','Ali Rezaei','licensed','Örnsköldsvik',150,900,{years:3,docs:docsFull(Y(150),Y(180),false),rating:{n:8,avg:3.6,rebook:63},legit:'446013'})
+  ];
+  const orgs=[
+    {id:'o1',name:'Norrhälsan Vård AB',own:['d1','d2','d5'],alumni:['d3','d4'],blocked:[{id:'b1',doctorId:'d12',reason:'r_no_show',note:{en:'Did not arrive for a booked shift on 14 Sep, no notice given.',sv:'Kom inte till ett bokat pass 14 sep, inget besked.'},by:'Karin Ek',at:D(-39,'10:12'),status:'active',approvedBy:'Per Sandberg',approvedAt:D(-39,'15:40')}]},
+    {id:'o2',name:'Kustläkarna AB',own:['d8'],alumni:['d1'],blocked:[]},
+    {id:'o3',name:'Fjällhälsan AB',own:['d4'],alumni:[],blocked:[]}
+  ];
+  const sites=[
+    {id:'s1',orgId:'o1',name:'Norrhälsan Björkdalen',city:'Sundsvall',addr:'Björkdalsvägen 14, Sundsvall',contact:'Karin Ek, rota coordinator (chat in app)',parking:{en:'Staff parking behind the building, code on arrival',sv:'Personalparkering bakom huset, kod vid ankomst'},ehr:'Cosmic',rating:{n:23,avg:4.6,ret:91}},
+    {id:'s2',orgId:'o1',name:'Norrhälsan Timrå',city:'Timrå',addr:'Storgatan 8, Timrå',contact:'Jonas Ljung, unit manager (chat in app)',parking:{en:'Free parking at the entrance',sv:'Fri parkering vid entrén'},ehr:'Cosmic',rating:{n:11,avg:4.3,ret:84}},
+    {id:'s3',orgId:'o2',name:'Kustläkarna Härnösand',city:'Härnösand',addr:'Nybrogatan 3, Härnösand',contact:'Reception (chat in app)',parking:{en:'Public car park opposite, ticket reimbursed',sv:'Allmän parkering mittemot, biljett ersätts'},ehr:'TakeCare',rating:{n:8,avg:4.1,ret:80}},
+    {id:'s4',orgId:'o3',name:'Fjällhälsan Östersund',city:'Östersund',addr:'Prästgatan 40, Östersund',contact:'Lisa Ström, medical secretary (chat in app)',parking:{en:'Garage under the building',sv:'Garage under huset'},ehr:'Cosmic',rating:{n:3,avg:4.8,ret:100}}
+  ];
+  let seq=0;
+  const mk=p=>Object.assign({id:'sh'+(++seq),siteId:'s1',grade:'gp_spec',rate:1150,rateFinal:null,notes:'',rateVis:'all',t1:4,t2:12,urgent:false,raisePct:10,extras:{travelCap:800,accomm:false},status:'posted',postedAt:null,applicants:[],doctorId:null,confirmedAt:null,filledTier:null,approvedExtras:[],contract:null,timesheet:null,ratings:{},botTiers:[],notified:[],source:'manual',cancel:null},p);
+  const signedBoth=(c,dd)=>({model:'contractor',clinicSignedAt:c,clinicSigner:'Karin Ek',doctorSignedAt:dd});
+  const N1={en:'Drop-in clinic and phone triage. Cosmic login sent the day before.',sv:'Drop-in och telefonrådgivning. Cosmic-inlogg skickas dagen innan.'};
+  const shifts=[];
+  shifts.push(mk({siteId:'s1',start:D(1,'09:00'),end:D(1,'15:00'),postedAt:D(0,'09:00'),urgent:true,rate:1300,notes:{en:'Weekend drop-in clinic. Usually 25–30 patients.',sv:'Helgmottagning, drop-in. Brukar vara 25–30 patienter.'}}));
+  shifts.push(mk({siteId:'s1',start:D(3,'08:00'),end:D(3,'17:00'),postedAt:D(0,'11:00'),notes:N1,applicants:[{doctorId:'d2',at:D(0,'11:40'),req:null,tier:1}]}));
+  shifts.push(mk({siteId:'s2',start:D(3,'12:00'),end:D(3,'20:00'),status:'confirmed',doctorId:'d5',rateFinal:1150,confirmedAt:D(0,'12:10'),filledTier:1,postedAt:D(-2,'09:00'),contract:{model:'employee',clinicSignedAt:D(0,'12:10'),clinicSigner:'Karin Ek',doctorSignedAt:null},notes:{en:'Late clinic, chronic care follow-ups.',sv:'Kvällsmottagning, uppföljning av kroniker.'}}));
+  shifts.push(mk({siteId:'s1',start:D(4,'08:00'),end:D(4,'17:00'),postedAt:D(0,'06:00'),notes:N1,applicants:[{doctorId:'d3',at:D(0,'10:30'),req:{type:'travel',amount:120,note:{en:'2 × 12 km by car',sv:'2 × 12 km bil'}},tier:2},{doctorId:'d4',at:D(0,'11:15'),req:{type:'accomm',amount:1200,note:{en:'One night at a hotel, travelling from Östersund',sv:'En natt på hotell, reser från Östersund'}},tier:2}]}));
+  shifts.push(mk({siteId:'s2',start:D(5,'08:00'),end:D(5,'16:30'),postedAt:D(-1,'15:00'),notes:{en:'Diabetes and hypertension follow-ups in the morning.',sv:'Diabetes- och hypertoniuppföljning på förmiddagen.'}}));
+  shifts.push(mk({siteId:'s1',start:D(6,'08:00'),end:D(6,'17:00'),status:'gap',source:'roster'}));
+  shifts.push(mk({siteId:'s2',start:D(7,'08:00'),end:D(7,'16:30'),status:'gap',source:'roster'}));
+  shifts.push(mk({siteId:'s1',start:D(7,'08:00'),end:D(7,'17:00'),status:'confirmed',doctorId:'d1',rateFinal:1150,confirmedAt:D(-2,'14:00'),filledTier:1,postedAt:D(-2,'10:00'),contract:signedBoth(D(-2,'14:00'),D(-2,'16:20')),notes:N1}));
+  shifts.push(mk({siteId:'s1',start:D(10,'08:00'),end:D(10,'17:00'),postedAt:D(0,'12:30'),notes:N1}));
+  shifts.push(mk({siteId:'s1',start:D(12,'08:00'),end:D(12,'17:00'),status:'confirmed',doctorId:'d1',rateFinal:1150,confirmedAt:D(0,'10:00'),filledTier:1,postedAt:D(-1,'09:00'),contract:{model:'contractor',clinicSignedAt:D(0,'10:00'),clinicSigner:'Karin Ek',doctorSignedAt:null},notes:N1}));
+  shifts.push(mk({siteId:'s1',start:D(0,'08:00'),end:D(0,'17:00'),status:'confirmed',doctorId:'d2',rateFinal:1150,confirmedAt:D(-5,'10:00'),filledTier:1,postedAt:D(-6,'10:00'),contract:signedBoth(D(-5,'10:00'),D(-5,'11:00')),notes:N1}));
+  // worked shifts
+  const sh7=mk({siteId:'s1',start:D(-1,'08:00'),end:D(-1,'17:00'),status:'submitted',doctorId:'d4',rateFinal:1150,confirmedAt:D(-6,'09:00'),filledTier:2,postedAt:D(-7,'08:00'),approvedExtras:[{type:'accomm',amount:1200,note:{en:'One night at a hotel',sv:'En natt på hotell'}}],contract:signedBoth(D(-6,'09:00'),D(-6,'10:00')),notes:N1});
+  sh7.timesheet={number:'PAS-2026-1047',kind:'invoice',submittedAt:D(-1,'18:30'),lines:[{kind:'hours',qty:9,unit:1150,amount:10350,status:'agreed'},{kind:'accomm',amount:1200,status:'agreed'},{kind:'travel',amount:600,note:{en:'Östersund–Sundsvall by train',sv:'Tåg Östersund–Sundsvall'},status:'auto',receipt:true},{kind:'parking',amount:120,note:{en:'Hotel parking',sv:'Parkering vid hotellet'},status:'review',receipt:true}],approvedAt:null,dueAt:null,paidAt:null,peppolAt:null};
+  shifts.push(sh7);
+  shifts.push(mk({siteId:'s2',start:D(-1,'08:00'),end:D(-1,'16:30'),status:'awaiting',doctorId:'d1',rateFinal:1150,confirmedAt:D(-8,'09:00'),filledTier:1,postedAt:D(-9,'09:00'),approvedExtras:[{type:'travel',amount:230,note:{en:'2 × 46 km by car',sv:'2 × 46 km bil'}}],contract:signedBoth(D(-8,'09:00'),D(-8,'09:30'))}));
+  const sh8=mk({siteId:'s2',start:D(-4,'08:00'),end:D(-4,'16:30'),status:'approved',doctorId:'d3',rateFinal:1100,confirmedAt:D(-10,'09:00'),filledTier:2,postedAt:D(-11,'08:00'),contract:signedBoth(D(-10,'09:00'),D(-10,'12:00'))});
+  sh8.timesheet={number:'PAS-2026-1044',kind:'invoice',submittedAt:D(-4,'17:10'),lines:[{kind:'hours',qty:8.5,unit:1100,amount:9350,status:'agreed'}],approvedAt:D(-3,'09:20'),dueAt:D(27,'09:20'),paidAt:null,peppolAt:D(-3,'09:21')};
+  sh8.ratings={clinic:{s:[5,5,4],yes:true,at:D(-3,'09:25')}};
+  shifts.push(sh8);
+  // other clinics (open market for doctors)
+  shifts.push(mk({siteId:'s3',start:D(4,'08:00'),end:D(4,'17:00'),rate:1250,postedAt:D(-1,'09:00'),t1:4,t2:8,raisePct:0,extras:{travelCap:600,accomm:false},notes:{en:'Mixed list, two booked home visits.',sv:'Blandad lista, två inbokade hembesök.'}}));
+  shifts.push(mk({siteId:'s3',start:D(6,'08:00'),end:D(6,'12:00'),rate:1200,rateVis:'own',postedAt:D(-2,'09:00'),t1:4,t2:8,raisePct:0,extras:{travelCap:600,accomm:false},notes:{en:'Morning on-call for the nursing home.',sv:'Förmiddagsjour för särskilt boende.'}}));
+  shifts.push(mk({siteId:'s4',start:D(12,'08:00'),end:D(12,'17:00'),rate:1400,rateVis:'range',postedAt:D(0,'08:00'),t1:2,t2:2,raisePct:0,extras:{travelCap:2500,accomm:true},notes:{en:'Rural practice, good support from district nurses.',sv:'Glesbygdsmottagning, bra stöd från distriktssköterskor.'}}));
+  // history (last 8 weeks)
+  const R=rng(7),pool=['d1','d2','d5','d3','d4','d1','d2','d3'];
+  let inv=1001;
+  for(let w=8;w>=1;w--){
+    for(let k=0;k<5;k++){
+      if(R()<0.22)continue;
+      const off=-(w*7)-4+k;
+      const ds=addD(base,off);const wd=new Date(ds+'T12:00:00Z').getUTCDay();if(wd===0||wd===6)continue;
+      const siteId=R()<0.6?'s1':'s2',start=at(ds,'08:00'),end=at(ds,siteId==='s1'?'17:00':'16:30');
+      const postedAt=start-(3+Math.floor(R()*7))*DAY;
+      if(R()<0.11){shifts.push(mk({siteId,start,end,postedAt,status:'unfilled',notes:N1}));continue}
+      const did=pool[Math.floor(R()*pool.length)],tier=orgs[0].own.includes(did)?1:2;
+      const fillH=tier===1?0.5+R()*3.5:4+R()*14;
+      const rate=[1100,1150,1150,1200][Math.floor(R()*4)];
+      const s=mk({siteId,start,end,postedAt,status:'paid',doctorId:did,rateFinal:rate,rate,confirmedAt:postedAt+fillH*H,filledTier:R()<0.12?3:tier,contract:signedBoth(postedAt+fillH*H,postedAt+(fillH+1)*H),notes:N1});
+      const hrs=(end-start)/H;
+      s.timesheet={number:'PAS-2026-'+(inv++),kind:orgs[0].own.includes(did)?'payroll':'invoice',submittedAt:end+2*H,lines:[{kind:'hours',qty:hrs,unit:rate,amount:hrs*rate,status:'agreed'}],approvedAt:end+DAY,dueAt:end+31*DAY,paidAt:end+(12+Math.floor(R()*16))*DAY,peppolAt:end+DAY};
+      if(s.timesheet.paidAt>clock){s.status='approved';s.timesheet.paidAt=null}
+      const sc=()=>4+(R()<0.6?1:0);
+      s.ratings={clinic:{s:[sc(),sc(),sc()],yes:true,at:end+DAY},doctor:{s:[sc(),sc(),sc(),sc()],yes:true,at:end+DAY}};
+      shifts.push(s);
+    }
+  }
+  shifts.forEach(s=>{if(s.status==='posted')s.notified=['d1','d3','d6','d9']});
+  const st={v:1,lang:(navigator.language||'').toLowerCase().startsWith('sv')?'sv':'en',role:'clinic',view:{clinic:'board',doctor:'feed',ops:'checks'},asDoctor:'d1',siteFilter:'all',clock,seq,invSeq:1048,
+    orgs,sites,doctors,shifts,
+    settings:{plan:'network',t1:4,t2:12,rateVis:'all',raisePct:10,travelCap:800,accomm:false,model:'contractor',cancelH:48,cancelPct:50,agencyPct:18},
+    events:[],audit:[{at:D(-39,'10:12'),key:'a_requested',vars:{by:'Karin Ek',name:'Ali Rezaei',reason:'r_no_show'}},{at:D(-39,'15:40'),key:'a_approved',vars:{by:'Per Sandberg',name:'Ali Rezaei'}}],
+    checks:[{at:D(0,'03:00'),key:'chk_ok',vars:{n:10}},{at:D(-1,'03:00'),key:'chk_ok',vars:{n:10}}],
+    concerns:[],seen:{clinic:D(0,'09:00'),d1:D(0,'09:00'),ops:D(0,'09:00')},introDone:false,reminded:[]};
+  st.events=[
+    {id:1,to:'clinic',at:D(0,'11:40'),key:'ev_applied',vars:{name:'Johan Berg',when:D(3,'08:00')},shiftId:'sh2'},
+    {id:2,to:'clinic',at:D(0,'11:15'),key:'ev_applied',vars:{name:'Per Nyström',when:D(4,'08:00')},shiftId:'sh4'},
+    {id:3,to:'clinic',at:D(-1,'18:30'),key:'ev_submitted',vars:{name:'Per Nyström',kind:'k_invoice',when:D(-1,'08:00')},shiftId:sh7.id},
+    {id:4,to:'d1',at:D(0,'12:30'),key:'ev_new_shift',vars:{site:'Norrhälsan Björkdalen',when:D(10,'08:00')},shiftId:'sh9'},
+    {id:5,to:'d1',at:D(0,'10:00'),key:'ev_confirmed',vars:{site:'Norrhälsan Björkdalen',when:D(12,'08:00')},shiftId:'sh10'},
+    {id:6,to:'d1',at:D(-1,'16:30'),key:'ev_ts_due',vars:{site:'Norrhälsan Timrå'},shiftId:'sh13'}
+  ];
+  st.evSeq=7;
+  return st;
+}
+
+/* ================= persistence ================= */
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function load(){try{const j=localStorage.getItem(LS);if(j){const o=JSON.parse(j);if(o&&o.v===1)return o}}catch(e){}return null}
+
+/* ================= model helpers ================= */
+const doc=id=>S.doctors.find(d=>d.id===id),site=id=>S.sites.find(s=>s.id===id),org=id=>S.orgs.find(o=>o.id===id),shift=id=>S.shifts.find(s=>s.id===id);
+const ownSites=()=>S.sites.filter(s=>s.orgId===OWN);
+const isOwn=sh=>site(sh.siteId).orgId===OWN;
+const cur=()=>doc(S.asDoctor);
+const hrs=sh=>(sh.end-sh.start)/H;
+const DONE=['awaiting','submitted','approved','paid'];
+function relation(d,orgId){const o=org(orgId);if(o.own.includes(d.id))return'own';if(o.alumni.includes(d.id))return'alumni';return'open'}
+function tier(sh,now){now=now||S.clock;if(sh.urgent)return 3;const e=(now-sh.postedAt)/H;if(e<sh.t1)return 1;if(e<sh.t1+sh.t2)return 2;return 3}
+function tierStart(sh,tr){if(sh.urgent)return sh.postedAt;return tr===1?sh.postedAt:tr===2?sh.postedAt+sh.t1*H:sh.postedAt+(sh.t1+sh.t2)*H}
+function tierEnd(sh){const tr=tier(sh);if(tr===3)return null;return tr===1?sh.postedAt+sh.t1*H:sh.postedAt+(sh.t1+sh.t2)*H}
+function effRate(sh){return tier(sh)===3&&sh.raisePct?Math.round(sh.rate*(1+sh.raisePct/100)/10)*10:sh.rate}
+function isBlocked(d,orgId){return org(orgId).blocked.some(b=>b.doctorId===d.id&&b.status==='active')}
+function check(d,sh){
+  const s=site(sh.siteId),o=org(s.orgId);
+  if(d.status!=='verified')return{ok:false,why:'why_unverified'};
+  if(isBlocked(d,o.id))return{ok:false,why:'why_blocked'};
+  if(GR[d.grade]<GR[sh.grade])return{ok:false,why:'why_grade'};
+  if(d.docs.some(x=>x.exp&&x.exp<sh.end))return{ok:false,why:'why_docs'};
+  const dist=kmC(d.city,s.city);if(dist>d.radius)return{ok:false,why:'why_radius',dist};
+  const rel=relation(d,o.id),tr=tier(sh);
+  if(tr===1&&rel!=='own')return{ok:false,why:'why_tier',opens:tierStart(sh,rel==='alumni'?2:3)};
+  if(tr===2&&rel==='open')return{ok:false,why:'why_tier',opens:tierStart(sh,3)};
+  if(!d.avail.includes(wdOf(sh.start)))return{ok:false,why:'why_avail'};
+  if(effRate(sh)<d.minRate)return{ok:false,why:'why_rate'};
+  if(S.shifts.some(x=>x!==sh&&x.doctorId===d.id&&x.status==='confirmed'&&x.start<sh.end&&x.end>sh.start))return{ok:false,why:'why_overlap'};
+  return{ok:true,dist,rel};
+}
+function vis(sh){return{gap:'gap',posted:sh.applicants.length?'app':'posted',confirmed:'ok',awaiting:'done',submitted:'done',approved:'done',paid:'done',unfilled:'bad',cancelled:'gap'}[sh.status]}
+function chipLabel(sh){
+  switch(sh.status){
+    case'gap':return t('lbl_gap');
+    case'posted':{if(sh.applicants.length)return t('lbl_apps',{n:sh.applicants.length});const tr=tier(sh),e=tierEnd(sh);return t('lbl_tier',{n:tr,name:tl('tier'+tr)})+(e?' · '+t('left',{d:dur(e-S.clock)}):'')}
+    case'confirmed':return esc(doc(sh.doctorId).name)+(sh.contract&&!sh.contract.doctorSignedAt?' · '+t('lbl_unsigned'):'');
+    case'awaiting':return t('lbl_awaiting_ts');case'submitted':return t('lbl_submitted');case'approved':return t('lbl_approved');case'paid':return t('lbl_paid');case'unfilled':return t('lbl_unfilled');case'cancelled':return t('lbl_cancelled')
+  }
+  return sh.status;
+}
+function ev(to,key,vars,shiftId){S.events.unshift({id:S.evSeq++,to,at:S.clock,key,vars:vars||{},shiftId});if(S.events.length>120)S.events.length=120}
+function evText(e){const v={};for(const k in e.vars){const x=e.vars[k];v[k]=k==='when'?fDT(x):(k==='kind'||k==='reason'||k==='doc')?tl(x):x}return t(e.key,v)}
+function notifyCurrent(){const d=cur();if(!d)return;for(const sh of S.shifts){if(sh.status!=='posted'||sh.start<=S.clock||sh.notified.includes(d.id))continue;if(check(d,sh).ok){sh.notified.push(d.id);ev(d.id,'ev_new_shift',{site:site(sh.siteId).name,when:sh.start},sh.id)}}}
+function markAllNotified(did){for(const sh of S.shifts)if(sh.status==='posted'&&!sh.notified.includes(did))sh.notified.push(did)}
+function hash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)}
+function travelFor(dist){return Math.round(dist*2*2.5/10)*10}
+
+/* ================= simulation ================= */
+function botApply(sh,tr){
+  const c=S.doctors.filter(d=>d.id!==S.asDoctor&&!sh.applicants.some(a=>a.doctorId===d.id)&&check(d,sh).ok);
+  if(!c.length)return;
+  const d=c[(hash(sh.id)+tr)%c.length],dist=kmC(d.city,site(sh.siteId).city);
+  let req=null;
+  if(dist>170&&!sh.extras.accomm)req={type:'accomm',amount:1100,note:{en:'One night at a hotel',sv:'En natt på hotell'}};
+  else if(dist>25){const a=travelFor(dist);if(a>sh.extras.travelCap)req={type:'travel',amount:a,note:{en:'2 × '+Math.round(dist)+' km, milersättning 25 kr/mil',sv:'2 × '+Math.round(dist)+' km, milersättning 25 kr/mil'}}}
+  sh.applicants.push({doctorId:d.id,at:S.clock,req,tier:tr});
+  if(isOwn(sh))ev('clinic','ev_applied',{name:d.name,when:sh.start},sh.id);
+}
+function tick(){
+  const now=S.clock;
+  for(const sh of S.shifts){
+    if(sh.status==='posted'){
+      if(sh.start<=now){sh.status='unfilled';if(isOwn(sh))ev('clinic','ev_unfilled',{when:sh.start},sh.id);continue}
+      const tr=tier(sh);
+      if(now-tierStart(sh,tr)>=H&&!sh.botTiers.includes(tr)){sh.botTiers.push(tr);botApply(sh,tr)}
+    }else if(sh.status==='confirmed'){
+      const d=doc(sh.doctorId);
+      if(sh.contract&&!sh.contract.doctorSignedAt&&sh.doctorId!==S.asDoctor&&now-sh.confirmedAt>=H){sh.contract.doctorSignedAt=now;if(isOwn(sh))ev('clinic','ev_signed',{name:d.name,when:sh.start},sh.id)}
+      if(now>=sh.end){sh.status='awaiting';const o=org(site(sh.siteId).orgId);if(relation(d,o.id)==='open')o.alumni.push(d.id);if(sh.doctorId===S.asDoctor)ev(d.id,'ev_ts_due',{site:site(sh.siteId).name},sh.id)}
+    }
+    if(sh.status==='awaiting'&&sh.doctorId!==S.asDoctor&&now-sh.end>=2*H)submitTimesheet(sh,[]);
+  }
+  notifyCurrent();
+}
+function advance(h){for(let i=0;i<h;i++){S.clock+=H;tick()}save();render();toast(t('adv_toast',{when:fDT(S.clock)}))}
+function submitTimesheet(sh,added){
+  const d=doc(sh.doctorId),o=org(site(sh.siteId).orgId),rel=relation(d,o.id);
+  const lines=[{kind:'hours',qty:hrs(sh),unit:sh.rateFinal,amount:hrs(sh)*sh.rateFinal,status:'agreed'}];
+  for(const x of sh.approvedExtras)lines.push({kind:x.type,amount:x.amount,note:x.note,status:'agreed'});
+  let travel=sh.approvedExtras.filter(x=>x.type==='travel').reduce((a,x)=>a+x.amount,0);
+  for(const x of added){let st='review';if(x.type==='travel'&&travel+x.amount<=sh.extras.travelCap){st='auto';travel+=x.amount}lines.push({kind:x.type,amount:x.amount,note:x.note,receipt:x.receipt,status:st})}
+  const kind=rel==='own'?'payroll':'invoice';
+  sh.timesheet={number:'PAS-2026-'+(S.invSeq++),kind,submittedAt:S.clock,lines,approvedAt:null,dueAt:null,paidAt:null,peppolAt:null};
+  sh.status='submitted';
+  if(isOwn(sh))ev('clinic','ev_submitted',{name:d.name,kind:kind==='invoice'?'k_invoice':'k_timesheet',when:sh.start},sh.id);
+}
+const tsTotal=ts=>ts.lines.filter(l=>l.status!=='rejected').reduce((a,l)=>a+l.amount,0);
+function costOf(sh,a,withReq){return hrs(sh)*effRate(sh)+(a&&a.req&&withReq?a.req.amount:0)}
+
+/* ================= UI helpers ================= */
+function avatar(d,cls){const ini=d.name.split(' ').map(x=>x[0]).slice(0,2).join('');const h=hash(d.id)*47%360;return`<span class="av ${cls||''}" style="--h:${h}" aria-hidden="true">${esc(ini)}</span>`}
+function pill(v,label){return`<span class="pill ${v}"><i></i>${label}</span>`}
+const CHECK='<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 1.5l2.2 1.6 2.7-.2.9 2.6 2.3 1.4-.6 2.6.6 2.6-2.3 1.4-.9 2.6-2.7-.2L10 18.5l-2.2-1.6-2.7.2-.9-2.6-2.3-1.4.6-2.6-.6-2.6 2.3-1.4.9-2.6 2.7.2z" opacity=".22"/><path d="M8.6 12.9 6 10.3l1.1-1.1 1.5 1.5 4.2-4.2 1.1 1.1z"/></svg>';
+function ratingLine(r,kind){if(!r||r.n<5)return t('rating_new');return`<span class="star">★</span> ${num(r.avg,1)} · ${kind==='site'?r.ret:r.rebook}% ${t(kind==='site'?'would_return':'would_rebook')} · ${r.n}`}
+function stat(v,k,extra){return`<div class="stat"><span class="v">${v}</span><span class="k">${k}</span>${extra||''}</div>`}
+function docStatus(x){if(!x.exp)return pill('ok',t('d_valid'));const left=x.exp-S.clock;if(left<0)return pill('bad',t('d_expired'));if(left<30*DAY)return pill('posted',t('d_expiring',{d:dur(left)}));return pill('ok',t('d_valid_to',{when:fDate(x.exp)}))}
+function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>{el.hidden=true},2800)}
+function nameOrRel(d){return d.name}
+function rateText(sh,d){const rel=relation(d,site(sh.siteId).orgId),r=effRate(sh);if(sh.rateVis==='all'||(sh.rateVis==='own'&&rel==='own'))return`${money(r)}<small>${tl('per_h')}</small>`;if(sh.rateVis==='range')return`<small>${t('from')}</small>${money(Math.floor(r*0.95/50)*50)}<small>${tl('per_h')}</small>`;return`<small>${t('rate_hidden')}</small>`}
+function audience(){return S.role==='clinic'?'clinic':S.role==='doctor'?S.asDoctor:'ops'}
+function unread(){const a=audience(),seen=S.seen[a]||0;return S.events.filter(e=>e.to===a&&e.at>seen).length}
+
+/* ================= render ================= */
+const TABS={clinic:[['board','tab_board'],['post','tab_post'],['import','tab_import'],['invoices','tab_invoices'],['doctors','tab_doctors'],['insights','tab_insights'],['inbox','tab_inbox'],['settings','tab_settings']],
+doctor:[['feed','tab_feed'],['mine','tab_mine'],['earnings','tab_earnings'],['profile','tab_profile'],['inbox','tab_inbox']],
+ops:[['checks','tab_checks'],['queue','tab_queue'],['trust','tab_trust'],['about','tab_about']]};
+const LOGO='<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="8" fill="var(--accent)"/><rect x="7" y="8" width="18" height="4" rx="2" fill="var(--accent-ink)" opacity=".55"/><rect x="7" y="14" width="11" height="4" rx="2" fill="var(--accent-ink)"/><rect x="7" y="20" width="15" height="4" rx="2" fill="var(--accent-ink)" opacity=".55"/><circle cx="23.5" cy="16" r="2.6" fill="var(--accent-ink)"/></svg>';
+function header(){
+  const u=unread(),v=S.view[S.role];
+  return`<header class="top"><div class="wrap bar">
+  <div class="brand">${LOGO}<span class="bname">Passet</span><span class="demo">${t('demo_badge')}</span></div>
+  <div class="seg" role="group" aria-label="${t('aria_role')}">${['clinic','doctor','ops'].map(r=>`<button data-a="role" data-v="${r}" aria-pressed="${S.role===r}">${t('role_'+r)}</button>`).join('')}</div>
+  <div class="seg" role="group" aria-label="Language / Språk"><button data-a="lang" data-v="en" aria-pressed="${S.lang==='en'}">ENG</button><button data-a="lang" data-v="sv" aria-pressed="${S.lang==='sv'}">SVE</button></div>
+  </div><div class="wrap sub"><nav class="tabs" aria-label="Sections">${TABS[S.role].map(([k,lab])=>`<button data-a="tab" data-v="${k}" aria-current="${v===k?'page':'false'}">${t(lab)}${k==='inbox'&&u?` <span class="count">${u}</span>`:''}</button>`).join('')}</nav>
+  <div class="clock"><span class="clabel">${t('demo_time')}</span><b>${esc(fDay(S.clock))} ${fTime(S.clock)}</b><button data-a="adv" data-v="1">+1 h</button><button data-a="adv" data-v="4">+4 h</button><button data-a="adv" data-v="24">+1 ${t('u_day')}</button></div></div></header>`;
+}
+function intro(){if(S.introDone)return'';return`<div class="alert info"><span><b>${t('intro_title')}.</b> ${t('intro_body')}</span><button class="btn sm" data-a="introok">${t('intro_ok')}</button></div>`}
+function render(){
+  document.documentElement.lang=S.lang;
+  const V={clinic:{board:vBoard,post:vPost,import:vImport,invoices:vInvoices,doctors:vDoctors,insights:vInsights,inbox:vInbox,settings:vSettings},doctor:{feed:vFeed,mine:vMine,earnings:vEarnings,profile:vProfile,inbox:vInbox},ops:{checks:vChecks,queue:vQueue,trust:vTrust,about:vAbout}};
+  const fn=V[S.role][S.view[S.role]]||Object.values(V[S.role])[0];
+  $('#app').innerHTML=header()+`<main class="wrap main">${intro()}${fn()}</main>`;
+  renderModal();
+}
+
+/* ---------- clinic: roster board ---------- */
+function vBoard(){
+  const now=S.clock,ds0=dstr(now),endW=at(addD(ds0,14),'00:00');
+  const mine=S.shifts.filter(sh=>isOwn(sh)&&sh.status!=='cancelled'&&(S.siteFilter==='all'||sh.siteId===S.siteFilter)&&sh.end>sod(now)&&sh.start<endW);
+  const filled=mine.filter(sh=>sh.status==='confirmed'||DONE.includes(sh.status)).length;
+  const open=mine.filter(sh=>['gap','posted','unfilled'].includes(sh.status));
+  const risk=mine.filter(sh=>['gap','posted'].includes(sh.status)&&sh.start>now&&sh.start-now<=48*H).sort((a,b)=>a.start-b.start);
+  const waiting=mine.filter(sh=>sh.status==='posted'&&sh.applicants.length);
+  const gaps=mine.filter(sh=>sh.status==='gap'&&sh.start>now);
+  const cov=mine.length?Math.round(filled/mine.length*100):100;
+  let h=`<div class="pagehead"><div><h1>${t('board_title')}</h1><p class="lede">${t('board_lede')}</p></div>
+  <label class="field inline"><span>${t('site')}</span><select id="sitefilter" data-a="sitefilter"><option value="all">${t('all_sites')}</option>${ownSites().map(s=>`<option value="${s.id}" ${S.siteFilter===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label></div>`;
+  if(risk.length)h+=`<div class="alert bad"><span><b>${t('risk_title',{n:risk.length})}.</b> ${t('risk_body')}</span><button class="btn sm" data-a="openshift" data-v="${risk[0].id}">${t('view_first')}</button></div>`;
+  h+=`<div class="stats">${stat(cov+'%',t('st_coverage'))}${stat(open.length,t('st_open'))}${stat(waiting.length,t('st_waiting'))}${stat(gaps.length,t('st_gaps'),gaps.length?`<button class="link small" data-a="publishgaps">${t('publish_all')}</button>`:'')}</div>`;
+  h+=`<div class="legend">${[['gap','lg_gap'],['posted','lg_posted'],['app','lg_app'],['ok','lg_ok'],['done','lg_done'],['bad','lg_bad']].map(([v,k])=>pill(v,t(k))).join('')}</div>`;
+  h+='<div class="card" style="padding-block:6px">';
+  for(let i=0;i<14;i++){
+    const ds=addD(ds0,i),day=mine.filter(sh=>dstr(sh.start)===ds).sort((a,b)=>a.start-b.start||a.siteId.localeCompare(b.siteId));
+    const wd=new Date(ds+'T12:00:00Z').getUTCDay();
+    if(!day.length&&(wd===0||wd===6))continue;
+    const ms=at(ds,'12:00');
+    h+=`<div class="day"><div class="dlabel ${i===0?'today':''}">${esc(F('w',{weekday:'short'}).format(ms))} ${esc(F('dm',{day:'numeric',month:'short'}).format(ms))}<small>${i===0?t('today'):t('wk')+' '+isoWeek(ds)}</small></div><div class="chips">`;
+    if(!day.length)h+=`<div class="empty-day">${t('no_shifts')}</div>`;
+    for(const sh of day){const s=site(sh.siteId);h+=`<button class="chip" data-a="openshift" data-v="${sh.id}"><span class="ctime">${fTime(sh.start)}–${fTime(sh.end)}</span><span class="cmain"><b>${esc(s.name)}</b><span class="muted">${t(GK[sh.grade])}${sh.urgent&&sh.status==='posted'?' · '+t('tag_urgent'):''}</span></span>${pill(vis(sh),chipLabel(sh))}</button>`}
+    h+='</div></div>';
+  }
+  return h+'</div>';
+}
+
+/* ---------- clinic: post ---------- */
+function vPost(){
+  const st=S.settings,tom=addD(dstr(S.clock),1);
+  return`<div class="pagehead"><div><h1>${t('post_title')}</h1><p class="lede">${t('post_lede')}</p></div></div>
+  <form class="card stack" data-a="post" novalidate>
+  <div class="form">
+   <label class="field"><span>${t('site')}</span><select name="site" id="pf-site">${ownSites().map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></label>
+   <label class="field"><span>${t('f_date')}</span><input type="date" name="date" id="pf-date" value="${tom}" min="${dstr(S.clock)}"></label>
+   <label class="field"><span>${t('f_start')}</span><input type="time" name="start" id="pf-start" value="08:00"></label>
+   <label class="field"><span>${t('f_end')}</span><input type="time" name="end" id="pf-end" value="17:00"></label>
+   <label class="field"><span>${t('f_grade')}</span><select name="grade" id="pf-grade">${Object.keys(GR).map(g=>`<option value="${g}">${t(GK[g])}</option>`).join('')}</select></label>
+   <label class="field"><span>${t('f_rate')}</span><input type="number" name="rate" id="pf-rate" value="1150" min="0" step="10" inputmode="numeric"></label>
+   <label class="field full"><span>${t('f_notes')}</span><textarea name="notes" id="pf-notes" placeholder="${t('f_notes_ph')}"></textarea></label>
+   <label class="field"><span>${t('f_repeat')}</span><input type="number" name="repeat" id="pf-repeat" value="0" min="0" max="10"></label>
+  </div>
+  <fieldset><legend>${t('fs_cascade')}</legend><div class="form">
+   <label class="field"><span>${t('f_t1')}</span><input type="number" name="t1" id="pf-t1" value="${st.t1}" min="0" max="72"></label>
+   <label class="field"><span>${t('f_t2')}</span><input type="number" name="t2" id="pf-t2" value="${st.t2}" min="0" max="72"></label>
+   <label class="field"><span>${t('f_raise')}</span><input type="number" name="raise" id="pf-raise" value="${st.raisePct}" min="0" max="50"></label>
+   <label class="check full"><input type="checkbox" name="urgent" id="pf-urgent"><span>${t('f_urgent')}</span></label>
+  </div></fieldset>
+  <div class="grid2">
+  <fieldset><legend>${t('fs_rate')}</legend><div class="stack">${['all','own','range'].map(v=>`<label class="check"><input type="radio" name="rateVis" value="${v}" ${st.rateVis===v?'checked':''}><span>${t('rv_'+v)}</span></label>`).join('')}</div></fieldset>
+  <fieldset><legend>${t('fs_extras')}</legend><div class="stack">
+   <label class="field"><span>${t('f_travelcap')}</span><input type="number" name="travelCap" id="pf-travel" value="${st.travelCap}" min="0" step="50"></label>
+   <label class="check"><input type="checkbox" name="accomm" id="pf-accomm" ${st.accomm?'checked':''}><span>${t('f_accomm')}</span></label></div></fieldset>
+  </div>
+  <p class="muted small" id="pf-err" role="alert"></p>
+  <div class="row"><button class="btn pri" type="submit">${t('post_btn')}</button></div>
+  </form>`;
+}
+
+/* ---------- clinic: import ---------- */
+let IMP=null;
+function vImport(){
+  let h=`<div class="pagehead"><div><h1>${t('imp_title')}</h1><p class="lede">${t('imp_lede')}</p></div></div>
+  <div class="card stack">
+   <div class="drop" id="drop"><b>${t('imp_drop')}</b><div class="row" style="justify-content:center"><label class="btn pri" for="roster-file">${t('imp_choose')}</label><input type="file" id="roster-file" accept=".csv,.xlsx,.xls,.txt" hidden><button class="btn" data-a="sample">${t('imp_sample')}</button></div></div>
+   <details><summary>${t('imp_paste')}</summary><div class="stack" style="margin-top:10px"><textarea id="paste" rows="5" placeholder="datum;start;slut;roll;läkare"></textarea><div><button class="btn sm" data-a="readpaste">${t('imp_read')}</button></div></div></details>
+   <p class="small muted">${t('imp_cols')}</p><pre class="code">date | start | end | role | doctor | site
+datum | start | slut | roll | läkare | enhet</pre><p class="small muted">${t('imp_gaprule')}</p>
+  </div>`;
+  if(IMP){
+    if(!IMP.rows.length)return h+`<div class="alert warn"><span>${t('imp_none')}</span></div>`;
+    const gaps=IMP.rows.filter(r=>r.gap&&!r.past);
+    h+=`<div class="card stack"><div class="row between"><b>${t('imp_found',{rows:IMP.rows.length,gaps:gaps.length})}</b>
+     <label class="field inline"><span>${t('imp_into')}</span><select id="imp-site">${ownSites().map(s=>`<option value="${s.id}" ${IMP.site===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label></div>
+     <div class="tablewrap"><table><thead><tr><th>${t('th_date')}</th><th>${t('th_time')}</th><th>${t('th_role')}</th><th>${t('th_doctor')}</th><th>${t('th_status')}</th></tr></thead><tbody>
+     ${IMP.rows.map(r=>`<tr><td class="mono">${esc(r.date)}</td><td class="mono">${esc(r.s)}–${esc(r.e)}</td><td>${t(GK[r.grade])}</td><td>${esc(r.doctor||'—')}</td><td>${r.past?pill('gap',t('imp_pastrow')):r.gap?pill('bad',t('imp_gap')):pill('ok',t('imp_covered'))}</td></tr>`).join('')}
+     </tbody></table></div>
+     <div class="row"><button class="btn" data-a="impdraft" ${gaps.length?'':'disabled'}>${t('imp_drafts',{n:gaps.length})}</button><button class="btn pri" data-a="imppub" ${gaps.length?'':'disabled'}>${t('imp_publish',{n:gaps.length})}</button></div></div>`;
+  }
+  return h;
+}
+const HDR={date:['date','datum','dag','day'],start:['start','från','from','starttid'],end:['end','slut','till','to','sluttid'],grade:['role','roll','grade','nivå','kompetens','level'],doctor:['doctor','läkare','assigned','bemanning','namn','name'],site:['site','enhet','unit','mottagning']};
+function normDate(v){v=String(v||'').trim();let m;if(m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');if(m=v.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})$/)){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}if(/^\d{5}$/.test(v)){const d=new Date(Date.UTC(1899,11,30)+Number(v)*DAY);return d.toISOString().slice(0,10)}return null}
+function normTime(v){v=String(v||'').trim().replace('.',':');const m=v.match(/^(\d{1,2}):?(\d{2})?/);if(!m)return null;return m[1].padStart(2,'0')+':'+(m[2]||'00')}
+function normGrade(v){v=String(v||'').toLowerCase();if(/\bst\b|st-|registrar/.test(v))return'gp_st';if(/spec|allmän|gp|distrikt/.test(v))return'gp_spec';if(/leg|licen|bt|at/.test(v))return'licensed';return'gp_spec'}
+function parseRows(rows){
+  rows=rows.filter(r=>r&&r.some(c=>String(c||'').trim()));if(rows.length<2)return[];
+  const head=rows[0].map(c=>String(c||'').trim().toLowerCase()),idx={};
+  for(const k in HDR)idx[k]=head.findIndex(c=>HDR[k].includes(c));
+  if(idx.date<0||idx.start<0||idx.end<0)return[];
+  const out=[];
+  for(const r of rows.slice(1)){
+    const date=normDate(r[idx.date]),s=normTime(r[idx.start]),e=normTime(r[idx.end]);if(!date||!s||!e)continue;
+    const doctor=idx.doctor>=0?String(r[idx.doctor]||'').trim():'';
+    const gap=!doctor||/^(vakant|vacant|gap|open|ledig|obemannad|\?|-|—)$/i.test(doctor);
+    const st=at(date,s);
+    out.push({date,s,e,grade:normGrade(idx.grade>=0?r[idx.grade]:''),doctor:gap?'':doctor,gap,past:st<=S.clock});
+  }
+  return out;
+}
+function parseText(txt){const lines=txt.split(/\r?\n/).filter(x=>x.trim());if(!lines.length)return[];const dl=[';','\t',','].map(d=>[d,lines[0].split(d).length]).sort((a,b)=>b[1]-a[1])[0][0];return parseRows(lines.map(l=>l.split(dl).map(c=>c.replace(/^"|"$/g,''))))}
+function sampleCSV(){
+  const base=dstr(S.clock);let first=1;while(new Date(addD(base,first)+'T12:00:00Z').getUTCDay()!==1)first++;
+  const names=['Johan Berg','Lina Karlsson','VAKANT','Sara Lindqvist','','Johan Berg','VAKANT','Lina Karlsson','Johan Berg','VAKANT'];
+  let csv='datum;start;slut;roll;läkare\n';
+  for(let i=0;i<10;i++){const ds=addD(base,first+(i%5)+(i>=5?7:0));csv+=`${ds};08:00;${i%2?'16:30':'17:00'};Specialist allmänmedicin;${names[i]}\n`}
+  return csv;
+}
+
+/* ---------- clinic: invoices ---------- */
+function lineRow(sh,l,i,editable){
+  const lab=l.kind==='hours'?`${t('x_hours')} · ${num(l.qty,1)} × ${money(l.unit)}`:t('x_'+l.kind)+(l.note?` · ${esc(tx(l.note))}`:'')+(l.receipt?` · ${t('ts_receipt').toLowerCase()}`:'');
+  const stmap={agreed:['ok','ln_agreed'],auto:['ok','ln_auto'],review:['posted','ln_review'],approved:['ok','ln_ok'],rejected:['bad','ln_rej']}[l.status];
+  const act=editable&&l.status==='review'?`<span class="actions"><button class="btn sm" data-a="lineok" data-v="${sh.id}" data-i="${i}">${t('approve')}</button><button class="btn sm danger" data-a="linerej" data-v="${sh.id}" data-i="${i}">${t('reject')}</button></span>`:pill(stmap[0],t(stmap[1]));
+  return`<div class="line"><span>${lab}</span><span class="amt" style="${l.status==='rejected'?'text-decoration:line-through':''}">${money(l.amount)}</span>${act}</div>`;
+}
+function invCard(sh,role){
+  const ts=sh.timesheet,d=doc(sh.doctorId),s=site(sh.siteId),overdue=sh.status==='approved'&&ts.dueAt&&S.clock>ts.dueAt;
+  const editable=role==='clinic'&&sh.status==='submitted';
+  let st=sh.status==='submitted'?pill('posted',t('st_submitted')):sh.status==='approved'?(overdue?pill('bad',t('overdue')):pill('app',t('due',{when:fDate(ts.dueAt)}))):pill('ok',t('st_paid',{when:fDate(ts.paidAt)}));
+  let h=`<article class="card stack"><div class="row between"><div class="person">${role==='clinic'?avatar(d):''}<div><b>${esc(role==='clinic'?d.name:s.name)}</b><div class="muted small">${esc(role==='clinic'?s.name:s.city)} · ${esc(fDay(sh.start))} · <span class="mono">${esc(ts.number)}</span></div></div></div>${st}</div>
+  <div class="small muted">${t(ts.kind==='invoice'?'kind_invoice':'kind_payroll')}</div>
+  <div class="lines">${ts.lines.map((l,i)=>lineRow(sh,l,i,editable)).join('')}</div><div class="total"><span>${t('total')}</span><span class="amt">${money(tsTotal(ts))}</span></div><div class="row">`;
+  if(role==='clinic'){
+    if(sh.status==='submitted')h+=`<button class="btn pri" data-a="approveinv" data-v="${sh.id}">${t(ts.kind==='invoice'?'approve_inv':'approve_ts')}</button>`;
+    if(sh.status==='approved'&&ts.kind==='invoice'&&!ts.peppolAt)h+=`<button class="btn" data-a="peppol" data-v="${sh.id}">${t('send_peppol')}</button>`;
+    if(ts.peppolAt)h+=`<span class="small muted">${t('peppol_sent',{when:fDate(ts.peppolAt)})}</span>`;
+    if(sh.status==='approved')h+=`<button class="btn" data-a="paid" data-v="${sh.id}">${t('mark_paid')}</button>`;
+    if(DONE.includes(sh.status)&&!sh.ratings.clinic)h+=`<button class="btn" data-a="rate" data-v="${sh.id}">${t('rate_doctor',{name:d.name})}</button>`;
+  }
+  if(ts.kind==='invoice')h+=`<button class="btn" data-a="viewinv" data-v="${sh.id}">${t('view_inv')}</button>`;
+  h+='</div>';
+  if(sh.ratings.clinic||sh.ratings.doctor)h+=ratingStatus(sh,role);
+  return h+'</article>';
+}
+function ratingStatus(sh,role){const mine=role==='clinic'?sh.ratings.clinic:sh.ratings.doctor,theirs=role==='clinic'?sh.ratings.doctor:sh.ratings.clinic;if(!mine)return'';const reveal=!!theirs||S.clock-sh.end>14*DAY;let th='';if(theirs){const avg=theirs.s.reduce((a,b)=>a+b,0)/theirs.s.length;th=t('rt_theirs',{s:'★ '+num(avg,1)+(theirs.yes?' · '+tl('yes'):' · '+tl('no'))})}else th=t('rt_theirs_hidden');return`<p class="small muted">${t('rt_yours')} · ${reveal&&theirs?th:t('rt_theirs_hidden')}</p>`}
+function vInvoices(){
+  const own=S.shifts.filter(sh=>isOwn(sh)&&sh.timesheet).sort((a,b)=>b.timesheet.submittedAt-a.timesheet.submittedAt);
+  const rev=own.filter(sh=>sh.status==='submitted'),aw=own.filter(sh=>sh.status==='approved'),paid=own.filter(sh=>sh.status==='paid').slice(0,6),due=S.shifts.filter(sh=>isOwn(sh)&&sh.status==='awaiting');
+  const sec=(k,arr,fn)=>`<p class="section-title">${t(k)} · ${arr.length}</p>${arr.length?arr.map(fn).join(''):`<p class="muted">${t('inv_none')}</p>`}`;
+  return`<div class="pagehead"><div><h1>${t('inv_title')}</h1><p class="lede">${t('inv_lede')}</p></div><button class="btn" data-a="export">${t('copy_export')}</button></div>
+  ${sec('inv_review',rev,sh=>invCard(sh,'clinic'))}
+  ${sec('inv_due',due,sh=>{const d=doc(sh.doctorId);return`<div class="card row between"><div class="person">${avatar(d)}<div><b>${esc(d.name)}</b><div class="small muted">${esc(site(sh.siteId).name)} · ${esc(fDay(sh.start))}</div></div></div>${pill('done',t('lbl_awaiting_ts'))}</div>`})}
+  ${sec('inv_await',aw,sh=>invCard(sh,'clinic'))}
+  ${sec('inv_paid',paid,sh=>invCard(sh,'clinic'))}`;
+}
+
+/* ---------- clinic: doctors ---------- */
+function vDoctors(){
+  const o=org(OWN),worked=id=>S.shifts.filter(sh=>isOwn(sh)&&sh.doctorId===id&&DONE.includes(sh.status)).length;
+  const row=(d,extra)=>`<div class="li"><div class="person">${avatar(d)}<div><b>${esc(d.name)}</b> ${d.status==='verified'?`<span class="verified">${CHECK}${t('p_verified')}</span>`:pill('bad',t(d.status==='pending'?'p_pending':'p_suspended'))}<div class="small muted">${t(GK[d.grade])} · ${esc(d.city)} · ${t('worked_here',{n:worked(d.id)})}</div><div class="small muted">${ratingLine(d.rating,'doc')}</div></div></div><div class="actions"><button class="btn sm" data-a="profile" data-v="${d.id}">${t('view_profile')}</button>${extra||''}</div></div>`;
+  const ownL=o.own.map(doc),alum=o.alumni.filter(id=>!o.own.includes(id)).map(doc);
+  const blocks=o.blocked.filter(b=>b.status!=='lifted');
+  let h=`<div class="pagehead"><div><h1>${t('doc_title')}</h1><p class="lede">${t('doc_lede')}</p></div></div>
+  <div class="card"><h2>${t('pool_own')} · ${ownL.length}</h2><div class="list" style="margin-top:6px">${ownL.map(d=>row(d,`<button class="btn sm danger" data-a="block" data-v="${d.id}">${t('block')}</button>`)).join('')}</div></div>
+  <div class="card"><h2>${t('pool_alumni')} · ${alum.length}</h2><div class="list" style="margin-top:6px">${alum.map(d=>row(d,`<button class="btn sm" data-a="addown" data-v="${d.id}">${t('add_own')}</button><button class="btn sm danger" data-a="block" data-v="${d.id}">${t('block')}</button>`)).join('')}</div></div>
+  <div class="card"><h2>${t('pool_blocked')} · ${blocks.length}</h2><div class="list" style="margin-top:6px">${blocks.length?blocks.map(b=>{const d=doc(b.doctorId);return`<div class="li"><div class="person">${avatar(d)}<div><b>${esc(d.name)}</b><div class="small muted">${t(b.reason)} · ${esc(tx(b.note))}</div><div class="small">${b.status==='pending'?pill('posted',t('blk_pending')):pill('bad',t('blk_active',{when:fDate(b.approvedAt)}))}</div></div></div><div class="actions">${b.status==='pending'?`<button class="btn sm pri" data-a="blkapprove" data-v="${b.id}">${t('blk_approve')}</button>`:`<button class="btn sm" data-a="unblock" data-v="${b.id}">${t('unblock')}</button>`}</div></div>`}).join(''):`<p class="muted">${t('tr_none')}</p>`}</div></div>
+  <div class="grid2"><div class="card stack"><h2>${t('invite_title')}</h2><p class="small">${t('invite_own')}</p><div class="row"><code class="mono">passet.se/j/NORRHALSAN</code><button class="btn sm" data-a="copy" data-v="passet.se/j/NORRHALSAN">${t('copy')}</button></div><p class="small">${t('invite_clinic')}</p><div class="row"><code class="mono">NORR-FREE-MONTH</code><button class="btn sm" data-a="copy" data-v="NORR-FREE-MONTH">${t('copy')}</button></div></div>
+  <div class="card stack"><h2>${t('audit_title')}</h2><div class="list">${S.audit.slice().sort((a,b)=>b.at-a.at).slice(0,8).map(a=>`<div class="li small"><span>${evAudit(a)}</span><span class="muted mono">${esc(fDT(a.at))}</span></div>`).join('')}</div></div></div>`;
+  return h;
+}
+function evAudit(a){const v=Object.assign({},a.vars);if(v.reason)v.reason=tl(v.reason);return t(a.key,v)}
+
+/* ---------- clinic: insights ---------- */
+function vInsights(){
+  const now=S.clock,from=now-56*DAY;
+  const hist=S.shifts.filter(sh=>isOwn(sh)&&sh.start>=from&&sh.start<now&&sh.status!=='cancelled'&&sh.status!=='gap');
+  const filled=hist.filter(sh=>DONE.includes(sh.status)),unf=hist.filter(sh=>sh.status==='unfilled');
+  const rate=hist.length?Math.round(filled.length/hist.length*100):0;
+  const ttf=filled.map(sh=>(sh.confirmedAt-sh.postedAt)/H).sort((a,b)=>a-b),med=ttf.length?ttf[Math.floor(ttf.length/2)]:0;
+  const spend=filled.reduce((a,sh)=>a+(sh.timesheet?tsTotal(sh.timesheet):hrs(sh)*sh.rateFinal),0);
+  const save=spend*S.settings.agencyPct/100;
+  const price=S.settings.plan==='network'?7900:3900,sub=price*ownSites().length*2,cps=filled.length?sub/filled.length:0;
+  const weeks=[];for(let w=8;w>=1;w--){const ws=now-w*7*DAY,we=ws+7*DAY;const f=filled.filter(sh=>sh.start>=ws&&sh.start<we).length,u=unf.filter(sh=>sh.start>=ws&&sh.start<we).length;weeks.push({lab:t('wk')+' '+isoWeek(dstr(ws+3*DAY)),f,u})}
+  const max=Math.max(4,...weeks.map(w=>w.f+w.u)),W=320,Hh=170,pad=26,bw=(W-pad-8)/weeks.length;
+  let bars='';weeks.forEach((w,i)=>{const x=pad+i*bw+bw*0.18,bwi=bw*0.64,hf=(Hh-40)*w.f/max,hu=(Hh-40)*w.u/max,yb=Hh-22;bars+=`<rect x="${x.toFixed(1)}" y="${(yb-hf).toFixed(1)}" width="${bwi.toFixed(1)}" height="${hf.toFixed(1)}" rx="2" fill="var(--accent)"/>`;if(w.u)bars+=`<rect x="${x.toFixed(1)}" y="${(yb-hf-hu-2).toFixed(1)}" width="${bwi.toFixed(1)}" height="${hu.toFixed(1)}" rx="2" fill="var(--bad)"/>`;bars+=`<text x="${(x+bwi/2).toFixed(1)}" y="${Hh-8}" text-anchor="middle">${esc(w.lab)}</text>`});
+  let grid='';for(let g=0;g<=max;g+=Math.ceil(max/4)){const y=Hh-22-(Hh-40)*g/max;grid+=`<line x1="${pad}" x2="${W-4}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${pad-6}" y="${(y+3).toFixed(1)}" text-anchor="end">${g}</text>`}
+  const byT=[1,2,3].map(n=>filled.filter(sh=>sh.filledTier===n).length),tot=Math.max(1,filled.length);
+  return`<div class="pagehead"><div><h1>${t('ins_title')}</h1><p class="lede">${t('ins_lede')}</p></div></div>
+  <div class="stats">${stat(rate+'%',t('ins_fill'))}${stat(dur(med*H),t('ins_ttf'))}${stat(filled.length,t('ins_shifts'))}${stat(money(save),t('ins_save'))}${stat(money(cps),t('ins_cps'))}</div>
+  <div class="grid2"><div class="card stack chart"><h2>${t('ins_weekly')}</h2><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${t('ins_weekly')}">${grid}${bars}</svg><div class="legend">${pill('ok',t('ins_filled'))}${pill('bad',t('ins_unfilled'))}</div></div>
+  <div class="card stack"><h2>${t('ins_tier')}</h2><div class="bars">${byT.map((n,i)=>`<div class="bar-row"><span>${t('tier'+(i+1))}</span><div class="bar-track"><div class="bar-fill" style="width:${(n/tot*100).toFixed(0)}%"></div></div><span class="num">${n}</span></div>`).join('')}</div>
+  <p class="small muted">${t('ins_spend')}: <span class="num">${money(spend)}</span>. ${t('ins_assume',{p:S.settings.agencyPct})}</p></div></div>`;
+}
+
+/* ---------- inbox ---------- */
+function vInbox(){
+  const a=audience(),list=S.events.filter(e=>e.to===a),seen=S.seenPrev||0;
+  return`<div class="pagehead"><div><h1>${t('inbox_title')}</h1></div></div><div class="card">${list.length?list.map(e=>`<div class="ev ${e.at>seen?'new':''}"><span class="dot"></span><div><div>${evText(e)}</div><div class="small muted mono">${esc(fDT(e.at))}</div></div>${e.shiftId&&shift(e.shiftId)?`<button class="btn sm" data-a="evopen" data-v="${e.shiftId}">${t('open')}</button>`:''}</div>`).join(''):`<p class="muted">${t('inbox_empty')}</p>`}</div>`;
+}
+
+/* ---------- clinic: settings ---------- */
+function vSettings(){
+  const s=S.settings,n=ownSites().length;
+  return`<div class="pagehead"><div><h1>${t('set_title')}</h1><p class="lede">${t('set_lede')}</p></div></div>
+  <form class="stack" data-a="savesettings">
+  <fieldset class="card"><legend>${t('fs_plan')}</legend><div class="stack">
+   <label class="check"><input type="radio" name="plan" value="bank" ${s.plan==='bank'?'checked':''}><span><b>${t('plan_bank')}</b><br><span class="small muted">${t('plan_price',{p:money(3900)})}</span></span></label>
+   <label class="check"><input type="radio" name="plan" value="network" ${s.plan==='network'?'checked':''}><span><b>${t('plan_network')}</b><br><span class="small muted">${t('plan_price',{p:money(7900)})}</span></span></label>
+   <p class="small muted">${t('plan_note')} ${n} × ${money(s.plan==='network'?7900:3900)}</p></div></fieldset>
+  <fieldset class="card"><legend>${t('fs_cascade')}</legend><div class="form">
+   <label class="field"><span>${t('f_t1')}</span><input type="number" name="t1" id="st-t1" value="${s.t1}" min="0"></label>
+   <label class="field"><span>${t('f_t2')}</span><input type="number" name="t2" id="st-t2" value="${s.t2}" min="0"></label>
+   <label class="field"><span>${t('f_raise')}</span><input type="number" name="raisePct" id="st-raise" value="${s.raisePct}" min="0"></label>
+   <label class="field"><span>${t('fs_rate')}</span><select name="rateVis" id="st-rv">${['all','own','range'].map(v=>`<option value="${v}" ${s.rateVis===v?'selected':''}>${t('rv_'+v)}</option>`).join('')}</select></label>
+   <label class="field"><span>${t('f_travelcap')}</span><input type="number" name="travelCap" id="st-travel" value="${s.travelCap}" min="0" step="50"></label>
+   <label class="check" style="align-self:end"><input type="checkbox" name="accomm" id="st-accomm" ${s.accomm?'checked':''}><span>${t('f_accomm')}</span></label>
+  </div></fieldset>
+  <fieldset class="card"><legend>${t('fs_terms')}</legend><div class="form">
+   <label class="field full"><span>${t('f_model')}</span><select name="model" id="st-model"><option value="contractor" ${s.model==='contractor'?'selected':''}>${t('m_contractor')}</option><option value="employee" ${s.model==='employee'?'selected':''}>${t('m_employee')}</option></select></label>
+   <label class="field"><span>${t('f_cancelh')}</span><input type="number" name="cancelH" id="st-ch" value="${s.cancelH}" min="0"></label>
+   <label class="field"><span>${t('f_cancelpct')}</span><input type="number" name="cancelPct" id="st-cp" value="${s.cancelPct}" min="0" max="100"></label>
+   <label class="field"><span>${t('f_agency')}</span><input type="number" name="agencyPct" id="st-ag" value="${s.agencyPct}" min="0" max="60"></label>
+  </div></fieldset>
+  <div><button class="btn pri" type="submit">${t('save')}</button></div></form>`;
+}
+
+/* ---------- doctor: feed ---------- */
+function asPicker(){
+  const opts=['d1','d3','d6','d9'].concat(S.doctors.filter(d=>d.signup).map(d=>d.id));
+  const d=cur(),rel=relation(d,OWN);
+  return`<div class="card row between"><div class="person">${avatar(d,'lg')}<div><label class="field inline"><span>${t('viewing_as')}</span><select id="asdoc" data-a="asdoc">${opts.map(id=>`<option value="${id}" ${id===S.asDoctor?'selected':''}>${esc(doc(id).name)}</option>`).join('')}</select></label><div class="small muted" style="margin-top:4px">${t(GK[d.grade])} · ${esc(d.city)} · ${t('rel_'+rel)}</div></div></div><button class="btn" data-a="signup">${t('new_signup')}</button></div>`;
+}
+function feedCard(sh,d,r,applied){
+  const s=site(sh.siteId),tr=tier(sh),rel=relation(d,s.orgId);
+  const tg=sh.urgent?t('tag_urgent'):tr===1?t('tag_own'):tr===2&&rel==='alumni'?t('tag_alumni'):t('tag_open');
+  const dist=kmC(d.city,s.city);
+  return`<article class="card shift stack"><div class="row top"><div><div class="when">${esc(fDayLong(sh.start))} · <span class="mono">${fTime(sh.start)}–${fTime(sh.end)}</span> · ${t('sh_hours',{h:num(hrs(sh),1)})}</div><h3>${esc(s.name)}</h3><div class="muted small">${esc(s.city)} · ${t('sh_dist',{k:dist})} · ${t(GK[sh.grade])}</div></div><div class="rate">${rateText(sh,d)}</div></div>
+  <div class="tags"><span class="tag acc">${tg}</span>${sh.extras.travelCap?`<span class="tag">${t('tag_travel',{a:money(sh.extras.travelCap)})}</span>`:''}${sh.extras.accomm?`<span class="tag">${t('tag_accomm')}</span>`:''}<span class="tag">${esc(s.ehr)}</span></div>
+  ${sh.notes?`<p class="small">${esc(tx(sh.notes))}</p>`:''}
+  <div class="row foot"><span class="small muted">${ratingLine(s.rating,'site')}</span><div class="actions">${applied?`<span class="applied small">${t('applied')}</span><button class="btn sm" data-a="withdraw" data-v="${sh.id}">${t('withdraw')}</button>`:`<button class="btn" data-a="applyreq" data-v="${sh.id}">${t('accept_req')}</button><button class="btn pri" data-a="apply" data-v="${sh.id}">${t('accept')}</button>`}</div></div></article>`;
+}
+function vFeed(){
+  const d=cur();
+  let h=`<div class="pagehead"><div><h1>${t('feed_title')}</h1><p class="lede">${t('feed_lede')}</p></div></div>${asPicker()}`;
+  if(d.status!=='verified')return h+`<div class="alert warn"><span>${t(d.status==='pending'?'su_queued':'why_unverified')}</span></div>`;
+  const posted=S.shifts.filter(sh=>sh.status==='posted'&&sh.start>S.clock).sort((a,b)=>a.start-b.start);
+  const ok=[],hid={};
+  for(const sh of posted){const app=sh.applicants.some(a=>a.doctorId===d.id),r=check(d,sh);if(app||r.ok)ok.push([sh,r,app]);else if(r.why!=='why_blocked'){(hid[r.why]=hid[r.why]||[]).push([sh,r])}}
+  const exp=d.docs.find(x=>x.exp&&x.exp-S.clock<30*DAY);
+  if(exp)h+=`<div class="alert warn"><span>${t('ev_doc_remind',{doc:tl(exp.k),when:fDate(exp.exp)})}</span><button class="btn sm" data-a="tab" data-v="profile">${t('d_upload')}</button></div>`;
+  h+=ok.length?ok.map(([sh,r,app])=>feedCard(sh,d,r,app)).join(''):`<div class="card muted">${t('feed_none')}</div>`;
+  const nh=Object.values(hid).reduce((a,x)=>a+x.length,0);
+  if(nh)h+=`<details class="card"><summary>${t('hidden_title',{n:nh})}</summary><div class="list" style="margin-top:8px">${Object.entries(hid).map(([why,arr])=>arr.map(([sh,r])=>`<div class="li small"><span><b>${esc(site(sh.siteId).name)}</b> · ${esc(fDT(sh.start))}</span><span class="muted">${t(why)}${r.opens?' · '+t('opens_in',{d:dur(r.opens-S.clock)}):''}</span></div>`).join('')).join('')}</div></details>`;
+  return h;
+}
+
+/* ---------- doctor: my shifts ---------- */
+function logistics(sh){const s=site(sh.siteId);return`<dl class="logi"><dt>${t('lg_addr')}</dt><dd>${esc(s.addr)}</dd><dt>${t('lg_contact')}</dt><dd>${esc(s.contact)}</dd><dt>${t('lg_parking')}</dt><dd>${esc(tx(s.parking))}</dd><dt>${t('lg_ehr')}</dt><dd>${t('lg_ehr_v',{s:s.ehr})}</dd><dt>${t('lg_induct')}</dt><dd>${t('lg_induct_v')}</dd></dl>`}
+function mineCard(sh,body,actions){const s=site(sh.siteId);return`<article class="card shift stack"><div class="row top"><div><div class="when">${esc(fDayLong(sh.start))} · <span class="mono">${fTime(sh.start)}–${fTime(sh.end)}</span></div><h3>${esc(s.name)}</h3><div class="muted small">${esc(s.city)} · ${t(GK[sh.grade])}</div></div><div class="rate">${money(sh.rateFinal||effRate(sh))}<small>${tl('per_h')}</small></div></div>${body||''}${actions?`<div class="actions">${actions}</div>`:''}</article>`}
+function vMine(){
+  const d=cur(),me=S.shifts.filter(sh=>sh.doctorId===d.id);
+  const toSign=me.filter(sh=>sh.status==='confirmed'&&sh.contract&&!sh.contract.doctorSignedAt).sort((a,b)=>a.start-b.start);
+  const up=me.filter(sh=>sh.status==='confirmed'&&sh.contract&&sh.contract.doctorSignedAt).sort((a,b)=>a.start-b.start);
+  const tsd=me.filter(sh=>sh.status==='awaiting');
+  const appl=S.shifts.filter(sh=>sh.status==='posted'&&sh.applicants.some(a=>a.doctorId===d.id));
+  const rate=me.filter(sh=>['submitted','approved','paid'].includes(sh.status)&&!sh.ratings.doctor&&S.clock-sh.end<14*DAY);
+  const sec=(k,arr,fn)=>`<p class="section-title">${t(k)} · ${arr.length}</p>${arr.length?arr.map(fn).join(''):`<p class="muted small">${t('m_none')}</p>`}`;
+  return`<div class="pagehead"><div><h1>${t('mine_title')}</h1><p class="lede">${t('mine_lede')}</p></div></div>${asPicker()}
+  ${sec('m_sign',toSign,sh=>mineCard(sh,'',`<button class="btn pri" data-a="contract" data-v="${sh.id}">${t('sign_contract')}</button>`))}
+  ${sec('m_ts',tsd,sh=>mineCard(sh,'',`<button class="btn pri" data-a="timesheet" data-v="${sh.id}">${t('submit_ts')}</button>`))}
+  ${sec('m_upcoming',up,sh=>mineCard(sh,logistics(sh),`<button class="btn" data-a="contract" data-v="${sh.id}">${t('view_contract')}</button><button class="btn danger" data-a="dcancel" data-v="${sh.id}">${t('cancel_shift')}</button>`))}
+  ${sec('m_applied',appl,sh=>mineCard(sh,'',`<span class="applied small">${t('applied')}</span><button class="btn sm" data-a="withdraw" data-v="${sh.id}">${t('withdraw')}</button>`))}
+  ${sec('m_rate',rate,sh=>mineCard(sh,'',`<button class="btn" data-a="rate" data-v="${sh.id}">${t('rate_now')}</button>`))}`;
+}
+
+/* ---------- doctor: earnings ---------- */
+function vEarnings(){
+  const d=cur(),me=S.shifts.filter(sh=>sh.doctorId===d.id&&sh.timesheet).sort((a,b)=>b.start-a.start);
+  const y=dstr(S.clock).slice(0,4);
+  const sum=f=>me.filter(f).reduce((a,sh)=>a+tsTotal(sh.timesheet),0);
+  const paid=sum(sh=>sh.status==='paid'&&dstr(sh.timesheet.paidAt).slice(0,4)===y),appr=sum(sh=>sh.status==='approved'),sub=sum(sh=>sh.status==='submitted'),over=sum(sh=>sh.status==='approved'&&S.clock>sh.timesheet.dueAt);
+  return`<div class="pagehead"><div><h1>${t('earn_title')}</h1><p class="lede">${t('earn_lede')}</p></div></div>${asPicker()}
+  <div class="stats">${stat(money(paid),t('e_paid'))}${stat(money(appr),t('e_approved'))}${stat(money(sub),t('e_submitted'))}${stat(money(over),t('e_overdue'))}</div>
+  ${me.length?me.map(sh=>invCard(sh,'doctor')).join(''):`<p class="muted">${t('inv_none')}</p>`}`;
+}
+
+/* ---------- doctor: profile ---------- */
+function vProfile(){
+  const d=cur(),wdn=L.wd[li()];
+  return`<div class="pagehead"><div><h1>${t('prof_title')}</h1><p class="lede">${t('prof_lede')}</p></div></div>${asPicker()}
+  <div class="grid2">
+  <div class="card stack"><div class="row between"><h2>${t('p_register')}</h2>${d.status==='verified'?`<span class="verified">${CHECK}${t('p_verified')}</span>`:pill(d.status==='pending'?'posted':'bad',t(d.status==='pending'?'p_pending':'p_suspended'))}</div>
+   <dl class="logi"><dt>${t('p_legit')}</dt><dd class="mono">${esc(d.legit)}</dd><dt>${t('f_grade')}</dt><dd>${t(GK[d.grade])}</dd><dt>${t('p_years')}</dt><dd>${d.years}</dd><dt>${t('p_langs')}</dt><dd>${esc(d.langs.join(', ').toUpperCase())}</dd><dt>${t('p_ehr')}</dt><dd>${esc(d.ehr.join(', '))}</dd></dl>
+   ${d.lastCheck?`<p class="small muted">${t('p_checked',{when:fDT(d.lastCheck)})}</p>`:''}</div>
+  <div class="card stack"><h2>${t('p_ratings')}</h2><p>${ratingLine(d.rating,'doc')}</p><h2 style="margin-top:8px">${t('p_refer')}</h2><p class="small muted">${t('p_refer_body')}</p><div class="row"><code class="mono">PASSET-${esc(d.name.split(' ')[0].toUpperCase())}25</code><button class="btn sm" data-a="copy" data-v="PASSET-${esc(d.name.split(' ')[0].toUpperCase())}25">${t('copy')}</button></div></div>
+  </div>
+  <div class="card stack"><h2>${t('p_passport')}</h2><p class="small muted">${t('p_passport_body')}</p><div class="list">${d.docs.map((x,i)=>`<div class="li"><span>${t(x.k)}</span><span class="row">${docStatus(x)}${x.exp?`<label class="btn sm" for="up-${i}">${t('d_upload')}</label><input type="file" id="up-${i}" data-up="${i}" hidden>`:''}</span></div>`).join('')}</div></div>
+  <form class="card stack" data-a="saveprofile"><h2>${t('p_prefs')}</h2><div class="form">
+   <label class="field"><span>${t('p_base')}</span><select name="city" id="p-city">${Object.keys(CITIES).map(c=>`<option ${c===d.city?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+   <label class="field"><span>${t('p_minrate')}</span><input type="number" name="minRate" id="p-min" value="${d.minRate}" min="0" step="50"></label>
+   <label class="field full"><span>${t('p_radius')}: <b id="p-radius-v">${d.radius} km</b></span><input type="range" name="radius" id="p-radius" min="10" max="800" step="10" value="${d.radius}"></label>
+   <div class="field full"><span>${t('p_avail')}</span><div class="days">${[1,2,3,4,5,6,0].map(i=>`<label><input type="checkbox" name="avail" value="${i}" ${d.avail.includes(i)?'checked':''}><span>${wdn[i]}</span></label>`).join('')}</div></div>
+   <label class="field"><span>${t('p_quiet')}</span><span class="row"><input type="time" name="q1" id="p-q1" value="${d.quiet[0]}" style="width:auto"> – <input type="time" name="q2" id="p-q2" value="${d.quiet[1]}" style="width:auto"></span></label>
+  </div><div><button class="btn pri" type="submit">${t('save')}</button></div></form>`;
+}
+
+/* ---------- ops ---------- */
+function vChecks(){
+  return`<div class="pagehead"><div><h1>${t('chk_title')}</h1><p class="lede">${t('chk_lede')}</p></div><button class="btn pri" data-a="runcheck">${t('chk_run')}</button></div>
+  <div class="grid2"><div class="alert info"><span class="small">${t('chk_src_se')}</span></div><div class="alert info"><span class="small">${t('chk_src_au')}</span></div></div>
+  <div class="tablewrap"><table><thead><tr><th>${t('th_doctor')}</th><th>${t('p_legit')}</th><th>${t('th_status')}</th><th>${t('th_last')}</th></tr></thead><tbody>${S.doctors.map(d=>`<tr><td>${esc(d.name)}</td><td class="mono">${esc(d.legit)}</td><td>${d.status==='verified'?pill('ok',t('p_verified')):d.status==='pending'?pill('posted',t('p_pending')):pill('bad',t('p_suspended'))}</td><td class="mono">${d.lastCheck?esc(fDT(d.lastCheck)):'—'}</td></tr>`).join('')}</tbody></table></div>
+  <div class="card"><h2>${t('chk_log')}</h2><div class="list" style="margin-top:6px">${S.checks.slice(0,10).map(c=>`<div class="li small"><span>${t(c.key,c.vars)}</span><span class="muted mono">${esc(fDT(c.at))}</span></div>`).join('')}</div></div>`;
+}
+function vQueue(){
+  const q=S.doctors.filter(d=>d.status==='pending');
+  const exp=[];for(const d of S.doctors)for(const x of d.docs)if(x.exp&&x.exp-S.clock<30*DAY)exp.push([d,x]);
+  return`<div class="pagehead"><div><h1>${t('q_title')}</h1><p class="lede">${t('q_lede')}</p></div></div>
+  <div class="card"><div class="list">${q.length?q.map(d=>`<div class="li"><div class="person">${avatar(d)}<div><b>${esc(d.name)}</b> <span class="mono small">${esc(d.legit)}</span><div class="small muted">${t(GK[d.grade])} · ${esc(d.city)}</div><div class="small">${t('q_items')}</div></div></div><div class="actions"><button class="btn sm danger" data-a="qrej" data-v="${d.id}">${t('q_reject')}</button><button class="btn sm pri" data-a="qok" data-v="${d.id}">${t('q_approve')}</button></div></div>`).join(''):`<p class="muted">${t('q_none')}</p>`}</div></div>
+  <div class="card"><h2>${t('q_expiring')}</h2><div class="list" style="margin-top:6px">${exp.length?exp.map(([d,x])=>`<div class="li"><span><b>${esc(d.name)}</b> · ${t(x.k)}</span><span class="row">${docStatus(x)}${S.reminded.includes(d.id+x.k)?`<span class="small muted">${t('q_reminded')}</span>`:`<button class="btn sm" data-a="remind" data-v="${d.id}" data-k="${x.k}">${t('q_remind')}</button>`}</span></div>`).join(''):`<p class="muted">${t('tr_none')}</p>`}</div></div>`;
+}
+function vTrust(){
+  const blocks=[];for(const o of S.orgs)for(const b of o.blocked)if(b.status==='pending')blocks.push([o,b]);
+  const rej=[];for(const sh of S.shifts)if(sh.timesheet)sh.timesheet.lines.forEach(l=>{if(l.status==='rejected')rej.push([sh,l])});
+  const late=S.shifts.filter(sh=>sh.cancel&&sh.cancel.late);
+  const box=(k,items)=>`<div class="card"><h2>${t(k)} · ${items.length}</h2><div class="list" style="margin-top:6px">${items.length?items.join(''):`<p class="muted">${t('tr_none')}</p>`}</div></div>`;
+  return`<div class="pagehead"><div><h1>${t('tr_title')}</h1><p class="lede">${t('tr_lede')}</p></div></div>
+  ${box('tr_blocks',blocks.map(([o,b])=>`<div class="li small"><span><b>${esc(doc(b.doctorId).name)}</b> · ${esc(o.name)} · ${t(b.reason)}</span><span class="muted mono">${esc(fDT(b.at))}</span></div>`))}
+  ${box('tr_concerns',S.concerns.map(c=>`<div class="li small"><span><b>${esc(doc(c.doctorId).name)}</b> · ${esc(c.text)}</span><span class="muted mono">${esc(fDT(c.at))}</span></div>`))}
+  ${box('tr_disputes',rej.map(([sh,l])=>`<div class="li small"><span><b>${esc(doc(sh.doctorId).name)}</b> · ${esc(sh.timesheet.number)} · ${t('x_'+l.kind)} ${money(l.amount)}</span><span class="muted">${esc(site(sh.siteId).name)}</span></div>`))}
+  ${box('tr_cancels',late.map(sh=>`<div class="li small"><span><b>${esc(sh.cancel.who)}</b> · ${esc(site(sh.siteId).name)} · ${esc(fDT(sh.start))}</span><span class="muted mono">${esc(fDT(sh.cancel.at))}</span></div>`))}`;
+}
+function vAbout(){
+  return`<div class="pagehead"><div><h1>${t('ab_title')}</h1><p class="lede">${t('ab_body')}</p></div></div>
+  <div class="grid2"><div class="card stack"><h2>${t('ab_works')}</h2><ul class="stack" style="margin:0;padding-left:18px">${L.ab_w[li()].map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+  <div class="card stack"><h2>${t('ab_sim')}</h2><ul class="stack" style="margin:0;padding-left:18px">${L.ab_s[li()].map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>
+  <div class="card row between"><span>${t('ab_reset_body')}</span><button class="btn danger" data-a="reset">${t('reset')}</button></div>`;
+}
+
+/* ================= modals ================= */
+function openM(m){M=m;renderModal();setTimeout(()=>{const f=document.querySelector('.modal button, .modal input, .modal select');if(f)f.focus()},20)}
+function closeM(){M=null;renderModal()}
+function renderModal(){
+  const root=$('#modal-root');if(!M){root.innerHTML='';return}
+  const fn={shift:mShift,contract:mContract,apply:mApply,timesheet:mTimesheet,rate:mRate,profile:mProfile,block:mBlock,concern:mConcern,signup:mSignup,ccancel:mCCancel,dcancel:mDCancel,invoice:mInvoice,text:mText}[M.type];
+  root.innerHTML=`<div class="ov" data-ov="1"><div class="modal" role="dialog" aria-modal="true">${fn()}</div></div>`;
+}
+const mhead=(title,sub)=>`<div class="mhead"><div><h2>${title}</h2>${sub?`<p class="small muted">${sub}</p>`:''}</div><button class="x" data-a="close" aria-label="${t('md_close')}">×</button></div>`;
+function mShift(){
+  const sh=shift(M.id),s=site(sh.siteId);
+  let h=mhead(esc(s.name),`${esc(fDayLong(sh.start))} · ${fTime(sh.start)}–${fTime(sh.end)} · ${t(GK[sh.grade])} · ${money(effRate(sh))}${tl('per_h')}`);
+  h+=`<div class="row">${pill(vis(sh),chipLabel(sh))}${sh.notes?`<span class="small muted">${esc(tx(sh.notes))}</span>`:''}</div>`;
+  if(sh.status==='gap')return h+`<div class="row"><button class="btn pri" data-a="pubone" data-v="${sh.id}">${t('sh_publish')}</button><button class="btn danger" data-a="ccancel" data-v="${sh.id}">${t('sh_cancel')}</button></div>`;
+  if(sh.status==='posted'){
+    const tr=tier(sh),stg=[1,2,3].map(n=>{const st=n===1?sh.postedAt:tierStart(sh,n);const cls=n===tr?'on':n<tr?'past':'';return`<div class="${cls}"><b>${t('tier'+n)}</b>${sh.urgent&&n<3?'—':n===1?t('sh_from_start'):(st<=S.clock?esc(fTime(st)):t('sh_after',{d:dur(st-S.clock)}))}</div>`}).join('');
+    h+=`<p class="small muted">${t('sh_posted',{when:fDT(sh.postedAt)})} · ${t('sh_cascade')}</p><div class="tl">${stg}</div>`;
+    h+=`<h3>${t('sh_apps')} · ${sh.applicants.length}</h3>`;
+    if(!sh.applicants.length)h+=`<p class="muted small">${t('sh_noapps')}</p>`;
+    const sel=M.pick||null;
+    const sorted=sh.applicants.slice().sort((a,b)=>costOf(sh,a,true)-costOf(sh,b,true));
+    for(const a of sorted){const d=doc(a.doctorId),dist=kmC(d.city,s.city),ok=M.reqOk?.[a.doctorId]!==false;const worked=S.shifts.filter(x=>x.siteId===sh.siteId&&x.doctorId===d.id&&DONE.includes(x.status)).length;
+      h+=`<div class="appl ${sel===a.doctorId?'sel':''}"><div class="row between"><div class="person">${avatar(d)}<div><b>${esc(d.name)}</b> <span class="verified">${CHECK}${t('p_verified')}</span><div class="small muted">${t(GK[d.grade])} · ${t('sh_dist',{k:dist})} · ${t('tier'+a.tier)} · ${t('worked_here',{n:worked})}</div><div class="small muted">${ratingLine(d.rating,'doc')}</div></div></div><div class="actions"><button class="btn sm" data-a="profile" data-v="${d.id}" data-back="1">${t('view_profile')}</button><button class="btn sm ${sel===a.doctorId?'pri':''}" data-a="pick" data-v="${d.id}">${t('sh_pick')}</button></div></div>
+      ${a.req?`<div class="line"><span>${t('sh_req',{type:tl('x_'+a.req.type).toLowerCase(),a:money(a.req.amount)})}${a.req.note?' · '+esc(tx(a.req.note)):''}</span><span></span><label class="check small"><input type="checkbox" data-req="${d.id}" ${ok?'checked':''}><span>${t('sh_req_ok')}</span></label></div>`:''}
+      <div class="row between small"><span class="muted">${t('sh_total')}</span><span class="tot">${money(costOf(sh,a,ok))}</span></div></div>`}
+    h+=`<div class="row">${sel?`<button class="btn pri" data-a="confirmpick" data-v="${sh.id}">${t('sh_confirm',{name:doc(sel).name})}</button>`:''}${tr<3?`<button class="btn" data-a="escalate" data-v="${sh.id}">${t('sh_escalate')}</button>`:''}<button class="btn" data-a="raise" data-v="${sh.id}">${t('sh_raise')}</button><button class="btn danger" data-a="ccancel" data-v="${sh.id}">${t('sh_cancel')}</button></div>`;
+    return h;
+  }
+  if(sh.status==='confirmed'){
+    const d=doc(sh.doctorId);
+    h+=`<div class="person">${avatar(d,'lg')}<div><b>${esc(d.name)}</b><div class="small muted">${t(GK[d.grade])} · ${esc(d.city)}</div></div></div>
+    <p>${t('sh_contract')}: ${sh.contract.doctorSignedAt?pill('ok',t('sh_signed_both')):pill('posted',t('sh_signed_clinic'))}</p>
+    ${sh.approvedExtras.length?`<div class="lines">${sh.approvedExtras.map(x=>`<div class="line"><span>${t('x_'+x.type)}</span><span class="amt">${money(x.amount)}</span><span></span></div>`).join('')}</div>`:''}
+    <div class="row"><button class="btn" data-a="contract" data-v="${sh.id}">${t('view_contract')}</button><button class="btn danger" data-a="ccancel" data-v="${sh.id}">${t('sh_cancel')}</button></div>`;
+    return h;
+  }
+  if(sh.doctorId){const d=doc(sh.doctorId);h+=`<div class="person">${avatar(d)}<div><b>${esc(d.name)}</b><div class="small muted">${t(GK[d.grade])}</div></div></div>`}
+  if(sh.status==='awaiting')h+=`<p class="muted">${t('sh_ts_wait')}</p>`;
+  if(['submitted','approved','paid'].includes(sh.status))h+=`<div class="row"><button class="btn pri" data-a="goinv">${t('go_invoices')}</button>${!sh.ratings.clinic?`<button class="btn" data-a="rate" data-v="${sh.id}">${t('rate_doctor',{name:doc(sh.doctorId).name})}</button>`:''}</div>`;
+  if(sh.status==='awaiting'&&!sh.ratings.clinic)h+=`<div class="row"><button class="btn" data-a="rate" data-v="${sh.id}">${t('rate_doctor',{name:doc(sh.doctorId).name})}</button></div>`;
+  if(sh.contract)h+=`<div><button class="btn sm" data-a="contract" data-v="${sh.id}">${t('view_contract')}</button></div>`;
+  return h;
+}
+function contractDoc(sh,d,extras,signing){
+  const s=site(sh.siteId),o=org(s.orgId),c=sh.contract||{model:S.settings.model},model=relation(d,o.id)==='own'?'employee':c.model,st=S.settings;
+  const rate=sh.rateFinal||effRate(sh),tot=hrs(sh)*rate+extras.reduce((a,x)=>a+x.amount,0);
+  const sig=(who,at,name)=>at?`<span class="ok">✓ ${t('ct_signed_by',{when:fDT(at),name})}</span>`:`<span class="muted">${t('ct_waiting')}</span>`;
+  return`<div class="doc"><h3>${t(model==='employee'?'ct_title_e':'ct_title_c')}</h3>
+  <div><b>${t('ct_parties')}</b><br>${t('ct_clinic')}: ${esc(o.name)}, ${esc(s.name)}<br>${t('ct_doctor')}: ${esc(d.name)} · ${t('p_legit')} <span class="mono">${esc(d.legit)}</span></div>
+  <div><b>${t('ct_assign')}</b><br>${esc(s.addr)}<br>${esc(fDayLong(sh.start))}, ${fTime(sh.start)}–${fTime(sh.end)} (${t('sh_hours',{h:num(hrs(sh),1)})}) · ${t(GK[sh.grade])}</div>
+  <div><b>${t('ct_fee')}</b><br>${money(rate)}${tl('per_h')} × ${num(hrs(sh),1)} = ${money(hrs(sh)*rate)}${extras.map(x=>`<br>${t('x_'+x.type)}: ${money(x.amount)}`).join('')}<br><b>${t('est_total')}: ${money(tot)}</b></div>
+  <div><b>${t('ct_terms')}</b><ul><li>${t('ct_t1')}</li><li>${t('ct_t2',{h:st.cancelH,p:st.cancelPct})}</li><li>${t(model==='employee'?'ct_t3e':'ct_t3c')}</li><li>${t('ct_t4')}</li></ul></div>
+  <div class="sig"><div><b>${t('ct_clinic')}</b><br>${sig('c',c.clinicSignedAt,c.clinicSigner)}</div><div><b>${t('ct_doctor')}</b><br>${sig('d',c.doctorSignedAt,d.name)}</div></div>
+  <p class="small muted">${t('ct_demo')}</p></div>`;
+}
+function mContract(){
+  const sh=shift(M.id),preview=!!M.preview,d=doc(preview?M.doctor:sh.doctorId);
+  const extras=preview?M.extras:sh.approvedExtras;
+  let h=mhead(t('sh_contract'),esc(site(sh.siteId).name));
+  h+=contractDoc(sh,d,extras,preview);
+  if(M.signing)h+=`<div class="bankid"><span class="spin"></span><span>${t('bankid_start')}</span></div>`;
+  else if(preview)h+=`<div class="row"><button class="btn" data-a="back">${t('md_back')}</button><button class="btn pri" data-a="doconfirm">${t('confirm_sign')} · BankID</button></div>`;
+  else if(S.role==='doctor'&&sh.contract&&!sh.contract.doctorSignedAt)h+=`<div class="row"><button class="btn pri" data-a="docsign" data-v="${sh.id}">${t('ct_sign_clinic')}</button></div>`;
+  return h;
+}
+function mApply(){
+  const sh=shift(M.id),s=site(sh.siteId),d=cur(),dist=kmC(d.city,s.city);
+  return mhead(t('req_title'),`${esc(s.name)} · ${esc(fDT(sh.start))}`)+`<p class="small muted">${t('req_body')}</p>${sh.extras.travelCap?`<div class="alert info small"><span>${t('policy_cap',{a:money(sh.extras.travelCap)})}</span></div>`:''}
+  <div class="form"><label class="field"><span>${t('req_type')}</span><select id="rq-type" data-m="rtype">${['travel','accomm','parking','other'].map(x=>`<option value="${x}" ${M.rtype===x?'selected':''}>${t('x_'+x)}</option>`).join('')}</select></label>
+  <label class="field"><span>${t('req_amount')}</span><input type="number" id="rq-amt" data-m="amount" value="${esc(M.amount==null?travelFor(dist):M.amount)}" min="0" step="10"></label>
+  <label class="field full"><span>${t('req_note')}</span><input type="text" id="rq-note" data-m="note" value="${esc(M.note||'')}" placeholder="${t('req_note_ph')}"></label></div>
+  <p class="small" id="rq-err" role="alert" style="color:var(--bad)"></p>
+  <div class="row"><button class="btn" data-a="close">${t('md_cancel')}</button><button class="btn pri" data-a="sendreq">${t('req_send')}</button></div>`;
+}
+function mTimesheet(){
+  const sh=shift(M.id),s=site(sh.siteId),d=doc(sh.doctorId),kind=relation(d,s.orgId)==='own'?'payroll':'invoice';
+  const base=[{kind:'hours',qty:hrs(sh),unit:sh.rateFinal,amount:hrs(sh)*sh.rateFinal,status:'agreed'}].concat(sh.approvedExtras.map(x=>({kind:x.type,amount:x.amount,note:x.note,status:'agreed'})));
+  const add=M.lines||[];
+  const tot=base.reduce((a,l)=>a+l.amount,0)+add.reduce((a,l)=>a+(Number(l.amount)||0),0);
+  return mhead(t('ts_title',{site:s.name}),`${esc(fDayLong(sh.start))} · ${fTime(sh.start)}–${fTime(sh.end)} · ${t(kind==='invoice'?'kind_invoice':'kind_payroll')}`)+
+  `<p class="small muted">${t('ts_body')}</p><div class="lines">${base.map(l=>lineRow(sh,l,0,false)).join('')}
+  ${add.map((l,i)=>`<div class="line" style="grid-template-columns:minmax(0,1fr)"><div class="form" style="gap:8px"><label class="field"><span>${t('req_type')}</span><select data-tl="${i}" data-f="type">${['travel','accomm','parking','other'].map(x=>`<option value="${x}" ${l.type===x?'selected':''}>${t('x_'+x)}</option>`).join('')}</select></label><label class="field"><span>${t('req_amount')}</span><input type="number" min="0" step="10" data-tl="${i}" data-f="amount" value="${esc(l.amount)}"></label><label class="field"><span>${t('req_note')}</span><input type="text" data-tl="${i}" data-f="note" value="${esc(l.note)}"></label><label class="check small" style="align-self:end"><input type="checkbox" data-tl="${i}" data-f="receipt" ${l.receipt?'checked':''}><span>${t('ts_receipt')}</span></label></div><div><button class="btn sm" data-a="tsdel" data-i="${i}">${t('remove')}</button></div></div>`).join('')}</div>
+  <div><button class="btn sm" data-a="tsadd">+ ${t('ts_add')}</button></div>
+  ${sh.extras.travelCap?`<p class="small muted">${t('policy_cap',{a:money(sh.extras.travelCap)})}</p>`:''}
+  <div class="total"><span>${t('total')}</span><span class="amt" id="ts-total">${money(tot)}</span></div>
+  <div class="row"><button class="btn" data-a="close">${t('md_cancel')}</button><button class="btn pri" data-a="tssubmit" data-v="${sh.id}">${t(kind==='invoice'?'ts_submit_inv':'ts_submit_pay')}</button></div>`;
+}
+function mRate(){
+  const sh=shift(M.id),s=site(sh.siteId),d=doc(sh.doctorId),clin=S.role==='clinic';
+  const qs=clin?['q_punct','q_prof','q_fit']:['q_induct','q_load','q_treat','q_paid'];
+  M.s=M.s||qs.map(()=>0);
+  return mhead(clin?t('rt_title_d',{name:d.name}):t('rt_title_c',{site:s.name}),`${esc(fDay(sh.start))}`)+`<p class="small muted">${t('rt_blind')}</p>
+  ${qs.map((q,i)=>`<div class="rq"><span>${t(q)}</span><span class="stars">${[1,2,3,4,5].map(n=>`<button data-a="star" data-i="${i}" data-v="${n}" class="${M.s[i]>=n?'on':''}" aria-label="${n}/5">★</button>`).join('')}</span></div>`).join('')}
+  <div class="rq"><span>${t(clin?'q_rebook':'q_return')}</span><span class="seg"><button data-a="yn" data-v="1" aria-pressed="${M.yes===true}">${t('yes')}</button><button data-a="yn" data-v="0" aria-pressed="${M.yes===false}">${t('no')}</button></span></div>
+  <label class="field"><span>${t('rt_comment')}</span><textarea id="rt-c" data-m="comment">${esc(M.comment||'')}</textarea></label>
+  <p class="small" id="rt-err" role="alert" style="color:var(--bad)"></p>
+  <div class="row between">${clin?`<button class="link small" data-a="concern" data-v="${sh.id}">${t('concern_link')}</button>`:'<span></span>'}<button class="btn pri" data-a="ratesend" data-v="${sh.id}">${t('rt_send')}</button></div>`;
+}
+function mProfile(){
+  const d=doc(M.id);
+  return mhead(t('pf_title'))+`<div class="person">${avatar(d,'lg')}<div><h2>${esc(d.name)}</h2>${d.status==='verified'?`<span class="verified">${CHECK}${t('p_verified')}</span>`:''}<div class="small muted">${t(GK[d.grade])} · ${esc(d.city)}</div></div></div>
+  <dl class="logi"><dt>${t('p_legit')}</dt><dd class="mono">${esc(d.legit)}</dd><dt>${t('p_years')}</dt><dd>${d.years}</dd><dt>${t('p_langs')}</dt><dd>${esc(d.langs.join(', ').toUpperCase())}</dd><dt>${t('p_ehr')}</dt><dd>${esc(d.ehr.join(', '))}</dd><dt>${t('p_ratings')}</dt><dd>${ratingLine(d.rating,'doc')}</dd></dl>
+  ${d.lastCheck?`<p class="small muted">${t('p_checked',{when:fDT(d.lastCheck)})}</p>`:''}
+  <h3>${t('p_passport')}</h3><div class="list">${d.docs.map(x=>`<div class="li small"><span>${t(x.k)}</span>${docStatus(x)}</div>`).join('')}</div>
+  ${M.back?`<div><button class="btn" data-a="back">${t('md_back')}</button></div>`:''}`;
+}
+function mBlock(){
+  const d=doc(M.id);
+  return mhead(t('blk_title',{name:d.name}))+`<p class="small muted">${t('blk_body')}</p>
+  <label class="field"><span>${t('blk_reason')}</span><select id="bk-r" data-m="reason">${['r_conduct','r_no_show','r_fit','r_clinical'].map(r=>`<option value="${r}" ${M.reason===r?'selected':''}>${t(r)}</option>`).join('')}</select></label>
+  ${M.reason==='r_clinical'?`<div class="alert warn small"><span>${t('blk_clinical_hint')}</span></div>`:''}
+  <label class="field"><span>${t('blk_note')}</span><textarea id="bk-n" data-m="note">${esc(M.note||'')}</textarea></label>
+  <div class="row"><button class="btn" data-a="close">${t('md_cancel')}</button><button class="btn danger" data-a="blocksend">${t('blk_request')}</button></div>`;
+}
+function mConcern(){return mhead(t('concern_title'))+`<p class="small muted">${t('concern_body')}</p><textarea id="cc-t" data-m="text">${esc(M.text||'')}</textarea><div class="row"><button class="btn" data-a="back">${t('md_back')}</button><button class="btn pri" data-a="concernsend">${t('concern_send')}</button></div>`}
+function mCCancel(){
+  const sh=shift(M.id),late=sh.status==='confirmed'&&sh.start-S.clock<S.settings.cancelH*H;
+  return mhead(t('sh_cancel'),`${esc(site(sh.siteId).name)} · ${esc(fDT(sh.start))}`)+(late?`<div class="alert warn"><span>${t('sh_late_note',{h:S.settings.cancelH,p:S.settings.cancelPct,a:money(hrs(sh)*sh.rateFinal*S.settings.cancelPct/100)})}</span></div>`:'')+`<div class="row"><button class="btn" data-a="close">${t('md_cancel')}</button><button class="btn danger" data-a="ccancelgo" data-v="${sh.id}">${t('sh_cancel_confirm')}</button></div>`;
+}
+function mDCancel(){const sh=shift(M.id);return mhead(t('cancel_shift'),`${esc(site(sh.siteId).name)} · ${esc(fDT(sh.start))}`)+`<div class="alert warn"><span>${t('sh_doc_cancel_note',{h:S.settings.cancelH})}</span></div><div class="row"><button class="btn" data-a="close">${t('md_cancel')}</button><button class="btn danger" data-a="dcancelgo" data-v="${sh.id}">${t('sh_cancel_confirm')}</button></div>`}
+function mInvoice(){
+  const sh=shift(M.id),ts=sh.timesheet,d=doc(sh.doctorId),s=site(sh.siteId),o=org(s.orgId);
+  return mhead(`${S.lang==='sv'?'Faktura':'Invoice'} ${esc(ts.number)}`)+`<div class="doc"><div class="row between"><div><b>${esc(d.name)}</b><br><span class="small">${t('doc_fskatt')}</span></div><div class="small mono" style="text-align:right">${esc(ts.number)}<br>${esc(fDate(ts.submittedAt))}</div></div>
+  <div><b>${esc(o.name)}</b><br>${esc(s.name)}, ${esc(s.addr)}</div>
+  <div class="lines">${ts.lines.map(l=>`<div class="line"><span>${l.kind==='hours'?`${t('x_hours')} ${esc(fDay(sh.start))} · ${num(l.qty,1)} × ${money(l.unit)}`:t('x_'+l.kind)+(l.note?' · '+esc(tx(l.note)):'')}</span><span class="amt" style="${l.status==='rejected'?'text-decoration:line-through':''}">${money(l.amount)}</span><span></span></div>`).join('')}</div>
+  <div class="total"><span>${t('total')}</span><span class="amt">${money(tsTotal(ts))}</span></div>
+  <p class="small muted">${S.lang==='sv'?'Betalning direkt till läkarens bankgiro enligt fakturan, 30 dagar. Momsbehandling enligt läkarens registrering.':'Payment directly to the doctor\'s bank giro stated on the invoice, 30 days. VAT treatment per the doctor\'s registration.'}</p>
+  <p class="small muted">${t('ct_demo')}</p></div>`;
+}
+function mText(){return mhead(M.title)+`<p class="small muted">${t('copy_fail')}</p><textarea rows="10" readonly style="font-family:var(--mono);font-size:.8rem">${esc(M.text)}</textarea>`}
+function mSignup(){
+  const st=M.step||1;
+  let h=mhead(t('su_title'))+`<div class="steps">${[1,2,3].map(n=>`<i class="${n<=st?'on':''}"></i>`).join('')}</div>`;
+  if(st===1){h+=`<h3>${t('su_s1')}</h3><p class="small muted">${t('su_s1_body')}</p><label class="field"><span>${t('su_name')}</span><input type="text" id="su-name" data-m="name" value="${esc(M.name||'')}" autocomplete="name"></label>`;
+    h+=M.busy?`<div class="bankid"><span class="spin"></span><span>${t('bankid_start')}</span></div>`:`<p class="small" id="su-err" role="alert" style="color:var(--bad)"></p><div class="row"><button class="btn pri" data-a="su1">${t('su_bankid')}</button></div>`}
+  if(st===2){h+=`<h3>${t('su_s2')}</h3><label class="field"><span>${t('su_legit')}</span><input type="text" id="su-legit" data-m="legit" inputmode="numeric" maxlength="6" value="${esc(M.legit||'')}"></label>`;
+    if(M.found===true)h+=`<div class="alert info small"><span>${t('su_found')}</span></div>`;
+    if(M.found===false)h+=`<div class="alert warn small"><span>${t('su_notfound')}</span></div><label class="btn" for="su-file">${t('su_upload')}</label><input type="file" id="su-file" accept=".pdf,image/*" hidden><span class="small muted" id="su-fn">${esc(M.file||'')}</span>`;
+    h+=`<p class="small" id="su-err" role="alert" style="color:var(--bad)"></p><div class="row"><button class="btn" data-a="su2">${t('su_check')}</button>${M.found!=null?`<button class="btn pri" data-a="su2next">${t('md_next')}</button>`:''}</div>`}
+  if(st===3){h+=`<h3>${t('su_s3')}</h3><div class="form"><label class="field"><span>${t('f_grade')}</span><select id="su-g" data-m="grade">${Object.keys(GR).map(g=>`<option value="${g}" ${M.grade===g?'selected':''}>${t(GK[g])}</option>`).join('')}</select></label>
+   <label class="field"><span>${t('p_base')}</span><select id="su-c" data-m="city">${Object.keys(CITIES).map(c=>`<option ${M.city===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+   <label class="field"><span>${t('p_radius')} (km)</span><input type="number" id="su-r" data-m="radius" value="${esc(M.radius||150)}" min="10" max="800"></label>
+   <label class="field"><span>${t('p_minrate')}</span><input type="number" id="su-m" data-m="minRate" value="${esc(M.minRate||1000)}" min="0" step="50"></label></div>
+   <div class="row"><button class="btn" data-a="su3back">${t('md_back')}</button><button class="btn pri" data-a="su3">${t('su_done')}</button></div>`}
+  return h;
+}
+
+/* ================= actions ================= */
+function afterChange(msg){save();render();if(msg)toast(msg)}
+function publish(sh){const st=S.settings;Object.assign(sh,{status:'posted',postedAt:S.clock,t1:st.t1,t2:st.t2,rateVis:st.rateVis,raisePct:st.raisePct,extras:{travelCap:st.travelCap,accomm:st.accomm},botTiers:[],applicants:[],notified:[]});}
+function confirmApplicant(sh,did,extras){
+  const d=doc(did),a=sh.applicants.find(x=>x.doctorId===did);
+  sh.status='confirmed';sh.doctorId=did;sh.rateFinal=effRate(sh);sh.confirmedAt=S.clock;sh.filledTier=a?a.tier:tier(sh);sh.approvedExtras=extras;
+  sh.contract={model:S.settings.model,clinicSignedAt:S.clock,clinicSigner:'Karin Ek',doctorSignedAt:null};
+  for(const x of sh.applicants)if(x.doctorId!==did&&x.doctorId===S.asDoctor)ev(x.doctorId,'ev_not_sel',{site:site(sh.siteId).name,when:sh.start},sh.id);
+  if(did===S.asDoctor)ev(did,'ev_confirmed',{site:site(sh.siteId).name,when:sh.start},sh.id);
+}
+const A={
+  role:el=>{S.role=el.dataset.v;closeM();afterChange()},
+  lang:el=>{S.lang=el.dataset.v;afterChange()},
+  tab:el=>{const v=el.dataset.v;if(v==='inbox'){const a=audience();S.seenPrev=S.seen[a]||0;S.seen[a]=S.clock}S.view[S.role]=v;afterChange();window.scrollTo(0,0)},
+  adv:el=>advance(Number(el.dataset.v)),
+  introok:()=>{S.introDone=true;afterChange()},
+  sitefilter:el=>{S.siteFilter=el.value;afterChange()},
+  openshift:el=>openM({type:'shift',id:el.dataset.v}),
+  evopen:el=>{const sh=shift(el.dataset.v);if(S.role==='clinic')openM({type:'shift',id:sh.id});else{S.view.doctor=sh.status==='posted'?'feed':['submitted','approved','paid'].includes(sh.status)?'earnings':'mine';afterChange()}},
+  publishgaps:()=>{const g=S.shifts.filter(sh=>isOwn(sh)&&sh.status==='gap'&&sh.start>S.clock);g.forEach(publish);notifyCurrent();afterChange(t('posted_ok',{n:g.length}))},
+  pubone:el=>{publish(shift(el.dataset.v));notifyCurrent();closeM();afterChange(t('sh_published'))},
+  pick:el=>{M.pick=el.dataset.v;renderModal()},
+  escalate:el=>{const sh=shift(el.dataset.v);sh.urgent=true;notifyCurrent();save();render();toast(t('sh_escalated'))},
+  raise:el=>{const sh=shift(el.dataset.v);sh.rate=Math.round(sh.rate*1.1/10)*10;save();render();toast(t('sh_raised',{r:money(effRate(sh))}))},
+  confirmpick:el=>{const sh=shift(el.dataset.v),a=sh.applicants.find(x=>x.doctorId===M.pick);const ok=!a.req||(M.reqOk?.[a.doctorId]!==false);M={type:'contract',id:sh.id,preview:true,doctor:a.doctorId,extras:a.req&&ok?[{type:a.req.type,amount:a.req.amount,note:a.req.note}]:[],from:{type:'shift',id:sh.id,pick:M.pick,reqOk:M.reqOk}};renderModal()},
+  back:()=>{if(M.from){M=M.from;renderModal()}else closeM()},
+  doconfirm:()=>{const m=M;M.signing=true;renderModal();setTimeout(()=>{const sh=shift(m.id);confirmApplicant(sh,m.doctor,m.extras);closeM();afterChange(t('confirmed_ok',{name:doc(m.doctor).name}))},900)},
+  docsign:el=>{M.signing=true;renderModal();const id=el.dataset.v;setTimeout(()=>{const sh=shift(id);sh.contract.doctorSignedAt=S.clock;if(isOwn(sh))ev('clinic','ev_signed',{name:doc(sh.doctorId).name,when:sh.start},sh.id);closeM();afterChange(t('signed_ok'))},900)},
+  contract:el=>openM({type:'contract',id:el.dataset.v}),
+  ccancel:el=>openM({type:'ccancel',id:el.dataset.v}),
+  ccancelgo:el=>{const sh=shift(el.dataset.v),late=sh.status==='confirmed'&&sh.start-S.clock<S.settings.cancelH*H;if(sh.status==='confirmed'){ev(sh.doctorId,'ev_cancel_c',{site:site(sh.siteId).name,when:sh.start},sh.id)}sh.cancel={by:'clinic',who:site(sh.siteId).name,at:S.clock,late};sh.status='cancelled';closeM();afterChange(t('sh_cancelled'))},
+  dcancel:el=>openM({type:'dcancel',id:el.dataset.v}),
+  dcancelgo:el=>{const sh=shift(el.dataset.v),d=doc(sh.doctorId),late=sh.start-S.clock<S.settings.cancelH*H;const copy=JSON.parse(JSON.stringify(sh));copy.id='sh'+(++S.seq);S.shifts.push(copy);sh.cancel={by:'doctor',who:d.name,at:S.clock,late};sh.status='cancelled';
+    Object.assign(copy,{status:'posted',postedAt:S.clock,urgent:true,applicants:[],doctorId:null,rateFinal:null,confirmedAt:null,contract:null,approvedExtras:[],botTiers:[],notified:[d.id],cancel:null});
+    if(isOwn(sh))ev('clinic','ev_cancel_d',{name:d.name,when:sh.start},copy.id);closeM();afterChange(t('sh_doc_cancel_ok'))},
+  apply:el=>{const sh=shift(el.dataset.v);sh.applicants.push({doctorId:S.asDoctor,at:S.clock,req:null,tier:tier(sh)});if(isOwn(sh))ev('clinic','ev_applied',{name:cur().name,when:sh.start},sh.id);afterChange(t('applied_ok'))},
+  applyreq:el=>openM({type:'apply',id:el.dataset.v,rtype:'travel'}),
+  sendreq:()=>{const amt=Number(M.amount==null?$('#rq-amt').value:M.amount);if(!(amt>0)){$('#rq-err').textContent=t('err_amount');return}const sh=shift(M.id);sh.applicants.push({doctorId:S.asDoctor,at:S.clock,req:{type:M.rtype||'travel',amount:amt,note:M.note||''},tier:tier(sh)});if(isOwn(sh))ev('clinic','ev_applied',{name:cur().name,when:sh.start},sh.id);closeM();afterChange(t('applied_ok'))},
+  withdraw:el=>{const sh=shift(el.dataset.v);sh.applicants=sh.applicants.filter(a=>a.doctorId!==S.asDoctor);afterChange(t('withdrawn'))},
+  asdoc:el=>{S.asDoctor=el.value;markAllNotified(S.asDoctor);afterChange()},
+  signup:()=>openM({type:'signup',step:1,grade:'gp_spec',city:'Sundsvall'}),
+  su1:()=>{const n=($('#su-name').value||'').trim();if(!n){$('#su-err').textContent=t('err_name');return}M.name=n;M.busy=true;renderModal();setTimeout(()=>{if(M&&M.type==='signup'){M.busy=false;M.step=2;renderModal()}},900)},
+  su2:()=>{const v=($('#su-legit').value||'').trim();if(!/^\d{6}$/.test(v)){$('#su-err').textContent=t('err_legit');return}M.legit=v;M.found=!v.endsWith('0');renderModal()},
+  su2next:()=>{M.step=3;renderModal()},
+  su3back:()=>{M.step=2;renderModal()},
+  su3:()=>{const id='d'+(S.doctors.length+1+Math.floor(Math.random()*900));const ok=M.found;const g=M.grade||'gp_spec';
+    S.doctors.push({id,name:M.name,grade:g,city:M.city||'Sundsvall',radius:Number(M.radius||150),minRate:Number(M.minRate||1000),status:ok?'verified':'pending',legit:M.legit,years:1,langs:['sv','en'],ehr:[],avail:[1,2,3,4,5],quiet:['22:00','07:00'],docs:[{k:'doc_id',exp:null},{k:'doc_legit',exp:null},{k:'doc_liab',exp:S.clock+300*DAY},{k:'doc_cpr',exp:S.clock+300*DAY},{k:'doc_fskatt',exp:null}],rating:{n:0,avg:0,rebook:0},lastCheck:ok?S.clock:null,signup:true});
+    const nm=M.name;S.asDoctor=id;S.view.doctor='feed';S.seen[id]=S.clock;closeM();if(ok)notifyCurrent();afterChange(ok?t('su_welcome',{name:nm}):t('su_queued'))},
+  timesheet:el=>openM({type:'timesheet',id:el.dataset.v,lines:[]}),
+  tsadd:()=>{M.lines.push({type:'travel',amount:'',note:'',receipt:false});renderModal()},
+  tsdel:el=>{M.lines.splice(Number(el.dataset.i),1);renderModal()},
+  tssubmit:el=>{const sh=shift(el.dataset.v);const add=M.lines.filter(l=>Number(l.amount)>0).map(l=>({type:l.type,amount:Number(l.amount),note:l.note,receipt:l.receipt}));submitTimesheet(sh,add);closeM();afterChange(t('ts_sent'))},
+  lineok:el=>{const sh=shift(el.dataset.v);sh.timesheet.lines[Number(el.dataset.i)].status='approved';afterChange()},
+  linerej:el=>{const sh=shift(el.dataset.v);sh.timesheet.lines[Number(el.dataset.i)].status='rejected';afterChange()},
+  approveinv:el=>{const sh=shift(el.dataset.v),ts=sh.timesheet;if(ts.lines.some(l=>l.status==='review')){toast(t('review_left'));return}sh.status='approved';ts.approvedAt=S.clock;ts.dueAt=S.clock+30*DAY;if(ts.kind==='payroll'){ts.peppolAt=null}ev(sh.doctorId,'ev_approved',{site:site(sh.siteId).name,no:ts.number},sh.id);afterChange(t(ts.kind==='invoice'?'inv_approved':'ts_approved'))},
+  peppol:el=>{shift(el.dataset.v).timesheet.peppolAt=S.clock;afterChange()},
+  paid:el=>{const sh=shift(el.dataset.v);sh.status='paid';sh.timesheet.paidAt=S.clock;ev(sh.doctorId,'ev_paid',{site:site(sh.siteId).name,no:sh.timesheet.number},sh.id);afterChange()},
+  viewinv:el=>openM({type:'invoice',id:el.dataset.v}),
+  export:el=>{const rows=S.shifts.filter(sh=>isOwn(sh)&&sh.timesheet&&['approved','paid'].includes(sh.status));const csv=['number;type;doctor;licence;site;date;hours;rate_sek;extras_sek;total_sek;status'].concat(rows.map(sh=>{const ts=sh.timesheet,d=doc(sh.doctorId),h=ts.lines.find(l=>l.kind==='hours');const ex=tsTotal(ts)-h.amount;return[ts.number,ts.kind,d.name,d.legit,site(sh.siteId).name,dstr(sh.start),h.qty,h.unit,ex,tsTotal(ts),sh.status].join(';')})).join('\n');copyText(csv,t('copy_export'))},
+  copy:el=>copyText(el.dataset.v,el.dataset.v),
+  rate:el=>openM({type:'rate',id:el.dataset.v}),
+  star:el=>{M.s[Number(el.dataset.i)]=Number(el.dataset.v);renderModal()},
+  yn:el=>{M.yes=el.dataset.v==='1';renderModal()},
+  ratesend:el=>{if(M.s.some(x=>!x)||M.yes==null){$('#rt-err').textContent=t('rt_need');return}const sh=shift(el.dataset.v),clin=S.role==='clinic',r={s:M.s.slice(),yes:M.yes,c:M.comment||'',at:S.clock};const avg=r.s.reduce((a,b)=>a+b,0)/r.s.length;
+    if(clin){sh.ratings.clinic=r;const d=doc(sh.doctorId);d.rating.avg=(d.rating.avg*d.rating.n+avg)/(d.rating.n+1);d.rating.rebook=Math.round((d.rating.rebook*d.rating.n+(r.yes?100:0))/(d.rating.n+1));d.rating.n++}
+    else{sh.ratings.doctor=r;const s=site(sh.siteId);s.rating.avg=(s.rating.avg*s.rating.n+avg)/(s.rating.n+1);s.rating.ret=Math.round((s.rating.ret*s.rating.n+(r.yes?100:0))/(s.rating.n+1));s.rating.n++}
+    closeM();afterChange(t('rt_done'))},
+  concern:el=>{M={type:'concern',id:el.dataset.v,from:M};renderModal()},
+  concernsend:()=>{const sh=shift(M.id),txt=(M.text||'').trim();if(txt)S.concerns.unshift({at:S.clock,doctorId:sh.doctorId,text:txt});M=M.from;save();renderModal();toast(t('concern_done'))},
+  profile:el=>openM({type:'profile',id:el.dataset.v,back:el.dataset.back?1:0,from:el.dataset.back?M:null}),
+  block:el=>openM({type:'block',id:el.dataset.v,reason:'r_conduct'}),
+  blocksend:()=>{const d=doc(M.id),o=org(OWN);o.blocked.push({id:'b'+Date.now(),doctorId:d.id,reason:M.reason||'r_conduct',note:M.note||'',by:'Karin Ek',at:S.clock,status:'pending'});S.audit.push({at:S.clock,key:'a_requested',vars:{by:'Karin Ek',name:d.name,reason:M.reason||'r_conduct'}});closeM();afterChange(t('blk_requested'))},
+  blkapprove:el=>{const o=org(OWN),b=o.blocked.find(x=>x.id===el.dataset.v);b.status='active';b.approvedBy='Per Sandberg';b.approvedAt=S.clock;o.own=o.own.filter(x=>x!==b.doctorId);for(const sh of S.shifts)if(sh.status==='posted'&&isOwn(sh))sh.applicants=sh.applicants.filter(a=>a.doctorId!==b.doctorId);S.audit.push({at:S.clock,key:'a_approved',vars:{by:'Per Sandberg',name:doc(b.doctorId).name}});afterChange(t('blk_done'))},
+  unblock:el=>{const o=org(OWN),b=o.blocked.find(x=>x.id===el.dataset.v);b.status='lifted';S.audit.push({at:S.clock,key:'a_lifted',vars:{by:'Per Sandberg',name:doc(b.doctorId).name}});afterChange(t('blk_lifted'))},
+  addown:el=>{const o=org(OWN);if(!o.own.includes(el.dataset.v))o.own.push(el.dataset.v);afterChange(t('saved'))},
+  runcheck:()=>{let f=0;for(const d of S.doctors){if(d.status==='pending')continue;d.lastCheck=S.clock;if(d.registerFlag==='revoked'&&d.status!=='suspended'){d.status='suspended';f++;for(const sh of S.shifts)sh.applicants=sh.applicants.filter(a=>a.doctorId!==d.id);S.checks.unshift({at:S.clock,key:'chk_revoked',vars:{name:d.name}});ev('ops','ev_suspended',{name:d.name})}}const n=S.doctors.filter(d=>d.status!=='pending').length;S.checks.unshift({at:S.clock,key:f?'chk_flag':'chk_ok',vars:{n,f}});afterChange(f?t('chk_flag',{n,f}):t('chk_ok',{n}))},
+  qok:el=>{const d=doc(el.dataset.v);d.status='verified';d.lastCheck=S.clock;afterChange(t('q_done',{name:d.name}))},
+  qrej:el=>{const d=doc(el.dataset.v);d.status='suspended';afterChange(t('q_rejected',{name:d.name}))},
+  remind:el=>{const d=doc(el.dataset.v),x=d.docs.find(y=>y.k===el.dataset.k);ev(d.id,'ev_doc_remind',{doc:x.k,when:x.exp});S.reminded.push(d.id+x.k);afterChange(t('q_reminded'))},
+  reset:()=>{S=seed();S.introDone=false;IMP=null;closeM();afterChange(t('reset_done'))},
+  sample:()=>{IMP={rows:parseText(sampleCSV()),site:IMP?IMP.site:'s1'};render()},
+  readpaste:()=>{IMP={rows:parseText($('#paste').value||''),site:IMP?IMP.site:'s1'};render()},
+  impdraft:()=>importGaps(false),imppub:()=>importGaps(true),
+  goinv:()=>{S.view.clinic='invoices';closeM();afterChange()},
+  close:()=>closeM()
+};
+function importGaps(pub){const siteId=($('#imp-site')||{}).value||IMP.site||'s1';let n=0;for(const r of IMP.rows){if(!r.gap||r.past)continue;const sh={id:'sh'+(++S.seq),siteId,grade:r.grade,rate:1150,rateFinal:null,notes:'',rateVis:S.settings.rateVis,t1:S.settings.t1,t2:S.settings.t2,urgent:false,raisePct:S.settings.raisePct,extras:{travelCap:S.settings.travelCap,accomm:S.settings.accomm},status:'gap',postedAt:null,applicants:[],doctorId:null,confirmedAt:null,filledTier:null,approvedExtras:[],contract:null,timesheet:null,ratings:{},botTiers:[],notified:[],source:'roster',cancel:null,start:at(r.date,r.s),end:at(r.date,r.e)};if(sh.end<=sh.start)continue;if(pub)publish(sh);S.shifts.push(sh);n++}IMP=null;notifyCurrent();S.view.clinic='board';afterChange(t(pub?'imp_done_p':'imp_done_d',{n}))}
+function copyText(txt,title){try{navigator.clipboard.writeText(txt).then(()=>toast(t('copied')),()=>openM({type:'text',title,text:txt}))}catch(e){openM({type:'text',title,text:txt})}}
+function readFile(file){if(!file)return;const r=new FileReader();const isX=/\.xlsx?$/i.test(file.name);r.onload=()=>{let rows=[];try{if(isX&&window.XLSX){const wb=XLSX.read(new Uint8Array(r.result),{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];rows=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd',defval:''}))}else rows=parseText(String(r.result))}catch(e){rows=[]}IMP={rows,site:IMP?IMP.site:'s1'};render()};if(isX)r.readAsArrayBuffer(file);else r.readAsText(file)}
+
+/* ================= events ================= */
+document.addEventListener('click',e=>{
+  const ov=e.target.closest('[data-ov]');if(ov&&e.target===ov){closeM();return}
+  const el=e.target.closest('[data-a]');if(!el||el.tagName==='SELECT'||el.tagName==='FORM')return;
+  const fn=A[el.dataset.a];if(fn){e.preventDefault();fn(el,e)}
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.tagName==='SELECT'&&el.dataset.a&&A[el.dataset.a])A[el.dataset.a](el,e);
+  if(el.dataset.m!==undefined&&M){M[el.dataset.m]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.m==='reason')renderModal()}
+  if(el.dataset.req!==undefined&&M){M.reqOk=M.reqOk||{};M.reqOk[el.dataset.req]=el.checked;renderModal()}
+  if(el.dataset.tl!==undefined&&M){M.lines[Number(el.dataset.tl)][el.dataset.f]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.f!=='note')renderModal()}
+  if(el.id==='roster-file')readFile(el.files[0]);
+  if(el.id==='imp-site'&&IMP)IMP.site=el.value;
+  if(el.id==='su-file'&&M){M.file=el.files[0]?el.files[0].name:'';renderModal()}
+  if(el.dataset.up!==undefined){const d=cur(),x=d.docs[Number(el.dataset.up)];x.exp=Math.max(x.exp||0,S.clock)+365*DAY;afterChange(t('d_uploaded'))}
+});
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.m!==undefined&&M)M[el.dataset.m]=el.value;
+  if(el.dataset.tl!==undefined&&M&&el.type!=='checkbox')M.lines[Number(el.dataset.tl)][el.dataset.f]=el.value;
+  if(el.id==='p-radius')$('#p-radius-v').textContent=el.value+' km';
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&M)closeM()});
+document.addEventListener('dragover',e=>{const d=e.target.closest&&e.target.closest('#drop');if(d){e.preventDefault();d.classList.add('over')}});
+document.addEventListener('dragleave',e=>{const d=e.target.closest&&e.target.closest('#drop');if(d)d.classList.remove('over')});
+document.addEventListener('drop',e=>{const d=e.target.closest&&e.target.closest('#drop');if(d){e.preventDefault();readFile(e.dataTransfer.files[0])}});
+document.addEventListener('submit',e=>{
+  e.preventDefault();const f=e.target,a=f.dataset.a,fd=new FormData(f);
+  if(a==='post'){
+    const date=fd.get('date'),s=fd.get('start'),en=fd.get('end'),rate=Number(fd.get('rate')),err=$('#pf-err');
+    if(!date||!s||!en||at(date,en)<=at(date,s)){err.textContent=t('err_time');return}
+    if(at(date,s)<=S.clock){err.textContent=t('err_past');return}
+    if(!(rate>0)){err.textContent=t('err_rate');return}
+    const rep=Math.min(10,Math.max(0,Number(fd.get('repeat'))||0));const dates=[date];let ds=date;while(dates.length<rep+1){ds=addD(ds,1);const w=new Date(ds+'T12:00:00Z').getUTCDay();if(w!==0&&w!==6)dates.push(ds)}
+    for(const dd of dates){S.shifts.push({id:'sh'+(++S.seq),siteId:fd.get('site'),grade:fd.get('grade'),rate,rateFinal:null,notes:String(fd.get('notes')||'').trim(),rateVis:fd.get('rateVis')||'all',t1:Number(fd.get('t1'))||0,t2:Number(fd.get('t2'))||0,urgent:fd.get('urgent')==='on',raisePct:Number(fd.get('raise'))||0,extras:{travelCap:Number(fd.get('travelCap'))||0,accomm:fd.get('accomm')==='on'},status:'posted',postedAt:S.clock,applicants:[],doctorId:null,confirmedAt:null,filledTier:null,approvedExtras:[],contract:null,timesheet:null,ratings:{},botTiers:[],notified:[],source:'manual',cancel:null,start:at(dd,s),end:at(dd,en)})}
+    notifyCurrent();S.view.clinic='board';afterChange(t('posted_ok',{n:dates.length}));
+  }
+  if(a==='savesettings'){const s=S.settings;s.plan=fd.get('plan');['t1','t2','raisePct','travelCap','cancelH','cancelPct','agencyPct'].forEach(k=>s[k]=Number(fd.get(k))||0);s.rateVis=fd.get('rateVis');s.accomm=fd.get('accomm')==='on';s.model=fd.get('model');afterChange(t('saved'))}
+  if(a==='saveprofile'){const d=cur();d.city=fd.get('city');d.minRate=Number(fd.get('minRate'))||0;d.radius=Number(fd.get('radius'))||50;d.avail=fd.getAll('avail').map(Number);d.quiet=[fd.get('q1')||'22:00',fd.get('q2')||'07:00'];notifyCurrent();afterChange(t('saved'))}
+});
+
+/* ================= boot ================= */
+S=load()||seed();
+render();
+</script>
+
+</html>
