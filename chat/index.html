@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Locumo Chat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: control bar on top (step caption, clock, next/back), two phone frames side by side, branch switches below; phones stack with a tab switch under 860px */
+:root{
+  --bg:#eef3f1; --surface:#ffffff; --surface-2:#e6eeea; --fg:#13211d; --muted:#596a64; --line:#d3ddd9;
+  --accent:#0c6857; --accent-ink:#ffffff; --accent-soft:#d3eae2;
+  --chat:#e9efe8; --me:#d6efe2; --them:#ffffff; --btn:#0c6857; --tpl:#b67507; --tpl-soft:#f5e8cf;
+  --frame:#1b2622; --pulse:rgba(12,104,87,.35);
+  --font:'Schibsted Grotesk',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1311; --surface:#131c19; --surface-2:#1a2521; --fg:#e3ede9; --muted:#93a39d; --line:#283631;
+  --accent:#45c2a4; --accent-ink:#04231b; --accent-soft:#163a31;
+  --chat:#0f1915; --me:#17402f; --them:#1b2622; --btn:#5fd1b3; --tpl:#e4a944; --tpl-soft:#3a2e16;
+  --frame:#000; --pulse:rgba(69,194,164,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1311; --surface:#131c19; --surface-2:#1a2521; --fg:#e3ede9; --muted:#93a39d; --line:#283631;
+  --accent:#45c2a4; --accent-ink:#04231b; --accent-soft:#163a31;
+  --chat:#0f1915; --me:#17402f; --them:#1b2622; --btn:#5fd1b3; --tpl:#e4a944; --tpl-soft:#3a2e16;
+  --frame:#000; --pulse:rgba(69,194,164,.4); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* top */
+.top{padding-block:14px 10px;display:flex;flex-direction:column;gap:10px}
+.bar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand svg{width:28px;height:28px}
+.bname{font-weight:800;font-size:1.3rem;letter-spacing:-.03em}.bo{color:var(--accent)}
+.sub{font-size:.82rem;color:var(--muted);font-weight:600}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:99px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:99px;font-weight:600;font-size:.86rem;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ctl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.cap{flex:1 1 320px;min-width:0}
+.cap .k{font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cap p{margin:2px 0 0;font-weight:600}
+.clock{font-family:var(--mono);font-size:.85rem;background:var(--surface-2);padding:5px 9px;border-radius:8px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:9px;font-weight:600;font-size:.9rem;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* phones */
+.tabs{display:none;gap:6px}
+.stage{display:grid;grid-template-columns:repeat(2,minmax(0,380px));justify-content:center;gap:28px;padding-block:6px 14px}
+.phone{background:var(--frame);border-radius:38px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);min-width:0}
+.screen{background:var(--chat);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;height:min(720px,calc(100vh - 230px));min-height:520px;position:relative}
+.who{font-size:.78rem;font-weight:700;text-align:center;color:var(--muted);margin:0 0 8px;letter-spacing:.04em;text-transform:uppercase}
+.ph-head{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;background:var(--surface);border-bottom:1px solid var(--line)}
+.ph-head svg{width:34px;height:34px;flex:none}
+.ph-head b{display:block;font-size:.98rem}
+.ph-head span{font-size:.75rem;color:var(--muted)}
+.ph-head .v{color:var(--accent);font-weight:700}
+.msgs{flex:1;overflow-y:auto;padding:10px 10px 14px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+.dsep{align-self:center;font-size:.72rem;font-weight:600;background:var(--surface);color:var(--muted);padding:3px 10px;border-radius:8px;margin:6px 0}
+.b{max-width:86%;border-radius:12px;padding:7px 9px 5px;font-size:.88rem;box-shadow:0 1px 1px rgba(0,0,0,.06);white-space:pre-line;overflow-wrap:anywhere}
+.b.them{align-self:flex-start;background:var(--them);border-top-left-radius:4px}
+.b.me{align-self:flex-end;background:var(--me);border-top-right-radius:4px}
+.b.sys{align-self:center;background:var(--accent-soft);font-size:.8rem;text-align:center;max-width:94%}
+.b .meta{display:flex;justify-content:flex-end;gap:6px;align-items:center;font-size:.68rem;color:var(--muted);margin-top:2px}
+.tpl{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--tpl-soft);color:var(--fg);padding:1px 5px;border-radius:4px}
+.b.new{animation:pop .28s ease-out}
+@keyframes pop{from{transform:translateY(6px);opacity:.2}to{transform:none;opacity:1}}
+.bwrap{align-self:flex-start;max-width:86%;display:flex;flex-direction:column;gap:3px;min-width:min(240px,86%)}
+.bwrap .b{max-width:100%}
+.qb{border:0;background:var(--them);color:var(--btn);font-weight:600;font-size:.86rem;padding:8px;border-radius:10px;cursor:pointer;box-shadow:0 1px 1px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;gap:6px}
+.qb[disabled]{opacity:.45;cursor:default}
+.qb.pulse{animation:pl 1.3s ease-in-out infinite}
+@keyframes pl{0%,100%{box-shadow:0 0 0 0 var(--pulse)}50%{box-shadow:0 0 0 6px var(--pulse)}}
+.qb svg{width:14px;height:14px}
+.rcpt-thumb{display:block;width:120px;height:150px;border-radius:8px;background:repeating-linear-gradient(0deg,#f7f5ef 0 13px,#e8e4da 13px 14px);color:#333;font-family:var(--mono);font-size:.62rem;padding:8px;line-height:1.3;white-space:pre}
+.input{display:flex;gap:6px;padding:8px;background:var(--surface);border-top:1px solid var(--line)}
+.input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:20px;padding:8px 12px;background:var(--bg)}
+.ib{border:0;width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);cursor:pointer;display:grid;place-items:center;flex:none}
+.ib.alt{background:var(--surface-2);color:var(--fg)}
+.ib svg{width:18px;height:18px}
+.ib.pulse,.input input.pulse{animation:pl 1.3s ease-in-out infinite}
+
+/* sheet */
+.sheet-ov{position:absolute;inset:0;background:rgba(0,0,0,.38);display:flex;align-items:flex-end;z-index:5}
+.sheet{background:var(--surface);width:100%;max-height:88%;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px;display:flex;flex-direction:column;gap:10px;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h3{margin:0;font-size:1.02rem}
+.sheet .url{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:.84rem;background:var(--surface-2);padding:10px;border-radius:10px}
+.sheet dt{color:var(--muted)} .sheet dd{margin:0;min-width:0}
+.sheet ul{margin:0;padding-left:18px;font-size:.84rem;display:flex;flex-direction:column;gap:3px}
+.sheet .row{display:flex;gap:8px;flex-wrap:wrap}
+.opt{border:1px solid var(--line);background:var(--surface);padding:11px;border-radius:10px;text-align:left;cursor:pointer;font-weight:600}
+.opt:hover{border-color:var(--accent)}
+.opt.pulse{animation:pl 1.3s ease-in-out infinite;border-color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:.82rem;display:flex;flex-direction:column;gap:4px}
+.ok{color:var(--accent);font-weight:700}
+.spin{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fld{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;padding:7px 0;border-bottom:1px solid var(--line)}
+.fld b{font-weight:600}
+textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--bg)}
+.rost{display:flex;flex-direction:column;gap:6px}
+.rost>div{display:flex;justify-content:space-between;gap:8px;font-size:.84rem;padding:8px;border-radius:8px;background:var(--surface-2)}
+.pill{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-soft);white-space:nowrap}
+.pill.w{background:var(--tpl-soft)}
+
+/* branches */
+.branches{padding-block:4px 40px;display:flex;flex-direction:column;gap:8px}
+.branches h2{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.bl{display:flex;flex-wrap:wrap;gap:6px}
+.bl button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:.84rem;font-weight:600;cursor:pointer}
+.bl button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.note{font-size:.82rem;color:var(--muted);max-width:72ch}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);background:var(--fg);color:var(--bg);padding:9px 15px;border-radius:10px;font-weight:600;font-size:.88rem;z-index:30;max-width:calc(100% - 32px)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#d0453a;margin-left:5px;vertical-align:middle}
+@media (max-width:860px){
+  .stage{grid-template-columns:minmax(0,400px)}
+  .tabs{display:flex;justify-content:center}
+  .phone.hide{display:none}
+  .screen{height:min(680px,calc(100vh - 250px))}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="bar">
+      <div class="brand" id="brand"></div>
+      <div class="seg" role="group" aria-label="Language / Språk"><button data-a="lang" data-v="en">ENG</button><button data-a="lang" data-v="sv">SVE</button></div>
+    </div>
+    <div class="ctl">
+      <div class="cap"><div class="k" id="capk"></div><p id="cap"></p></div>
+      <span class="clock" id="clock"></span>
+      <button class="btn" data-a="back" id="bk"></button>
+      <button class="btn pri" data-a="next" id="nx"></button>
+      <button class="btn" data-a="restart" id="rs"></button>
+    </div>
+    <div class="tabs seg" role="group" id="tabs"></div>
+  </header>
+  <main class="stage" id="stage"></main>
+  <section class="branches"><h2 id="brh"></h2><div class="bl" id="bl"></div><p class="note" id="note"></p></section>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+'use strict';
+/* ============ copy ============ */
+const UI={
+ sub:['Chat prototype · demo data','Chattprototyp · demodata'],karin:['Karin · practice manager','Karin · vårdcentral'],sara:['Sara · doctor','Sara · läkare'],
+ biz:['Business account','Företagskonto'],next:['Next step','Nästa steg'],back:['Back','Tillbaka'],restart:['Restart','Börja om'],
+ step:['Step {n} of {t}','Steg {n} av {t}'],done:['Path complete','Klart'],main:['Main path','Huvudflöde'],branch:['Branch','Gren'],
+ brh:['Start a branch','Starta en gren'],
+ note:['Next step taps the highlighted button for you. You can also tap buttons and type in either phone yourself. Messages tagged TEMPLATE use a Meta-approved template; the rest are sent inside the 24-hour window.','Nästa steg trycker på den markerade knappen åt dig. Du kan också trycka och skriva själv i båda telefonerna. Meddelanden märkta MALL använder en mall som Meta godkänt; resten skickas inom 24-timmarsfönstret.'],
+ tpl:['Template','Mall'],typemsg:['Message','Meddelande'],send:['Send','Skicka'],photo:['Send photo','Skicka foto'],
+ endmain:['That is the whole main path. Pick a branch below, or restart.','Det var hela huvudflödet. Välj en gren nedan, eller börja om.'],
+ endbr:['End of this branch. Pick another, or restart.','Slut på grenen. Välj en annan, eller börja om.'],
+ offpath:['You have left the scripted path. Keep exploring, or press Restart.','Du har lämnat manuset. Fortsätt utforska, eller tryck Börja om.'],
+ back2:['Back to WhatsApp','Tillbaka till chatten'],
+ cal:['Calendar file downloaded (demo)','Kalenderfil nedladdad (demo)'],map:['Opens the address in Maps (demo)','Öppnar adressen i kartor (demo)'],saved:['Saved (demo)','Sparat (demo)'],sentc:['Sent to the medical director (demo)','Skickat till medicinskt ansvarig (demo)'],
+ none:['Nothing to do here. Tap a button in a chat.','Inget att göra här. Tryck på en knapp i en chatt.'],
+ waiting:['Waiting for you to tap','Väntar på att du trycker'],
+};
+const BR=[['request','Accept with request','Tacka ja med önskemål'],['per','Karin picks Per','Karin väljer Per'],['cancel','Sara cancels late','Sara avbokar sent'],['hours','Hours were different','Timmarna blev andra'],['msgk','Karin messages Sara','Karin skriver till Sara'],['msgs','Sara messages Karin','Sara skriver till Karin'],['unclear','Unclear request','Otydlig förfrågan'],['block','Block booking','Blockbokning'],['query','Query an invoice','Fråga om faktura'],['agency','Send to agency','Skicka till bemanningsbolag'],['pause','Pause alerts','Pausa notiser']];
+
+/* messages: [tpl, en, sv, buttons] ; button [key,en,sv,type] type: r reply, l link, s score list */
+const SC=[['5','5 Excellent','5 Utmärkt'],['4','4 Good','4 Bra'],['3','3 OK','3 Okej'],['2','2 Poor','2 Dåligt'],['1','1 Very poor','1 Mycket dåligt']];
+const SCB=[['score','Choose score','Välj betyg','s']];
+const M={
+K01:[1,"Hi Karin, welcome to Locumo. Norrhälsan Björkdalen is set up. Post a shift any time by telling me what you need, for example “GP tomorrow 8–17”.\n\nYour defaults: 1,150 SEK/h, own staff first for 4 h, then alumni for 12 h, then everyone in range. Early bonus 300 SEK for applying in the first 4 h. Travel reimbursed up to 800 SEK.","Hej Karin, välkommen till Locumo. Norrhälsan Björkdalen är klar att använda. Lägg ut ett pass när du vill genom att skriva vad du behöver, till exempel ”Läkare i morgon 8–17”.\n\nDina standardval: 1 150 kr/tim, egen personal först i 4 tim, sedan tidigare anlitade i 12 tim, sedan alla inom räckhåll. Tidig bonus 300 kr för den som söker inom 4 tim. Resa ersätts upp till 800 kr.",[['got','Got it','Uppfattat'],['defaults','Change defaults','Ändra standardval','l']]],
+K02:[0,"Got it. Please check before I post:\n\nThu 29 Oct, 08:00–17:00 (9 h)\nGP specialist · Björkdalen\n1,150 SEK/h, est. 10,350 SEK\nOwn staff first (4 h), then alumni (12 h), then open market\nEarly bonus 300 SEK · travel up to 800 SEK","Uppfattat. Kontrollera innan jag lägger ut:\n\ntor 29 okt, 08:00–17:00 (9 tim)\nSpecialist i allmänmedicin · Björkdalen\n1 150 kr/tim, beräknat 10 350 kr\nEgen personal först (4 tim), sedan tidigare anlitade (12 tim), sedan öppna marknaden\nTidig bonus 300 kr · resa upp till 800 kr",[['post','Post it','Lägg ut'],['urgent','Make urgent','Gör brådskande'],['edit','Edit','Ändra']]],
+K02a:[0,"Got it. Please check before I post:\n\n{d}, 13:00–17:00 (4 h)\nGP specialist · Björkdalen\n1,150 SEK/h, est. 4,600 SEK\nOwn staff first (4 h), then alumni (12 h), then open market","Uppfattat. Kontrollera innan jag lägger ut:\n\n{d}, 13:00–17:00 (4 tim)\nSpecialist i allmänmedicin · Björkdalen\n1 150 kr/tim, beräknat 4 600 kr\nEgen personal först (4 tim), sedan tidigare anlitade (12 tim), sedan öppna marknaden",[['post','Post it','Lägg ut'],['urgent','Make urgent','Gör brådskande'],['edit','Edit','Ändra']]],
+K03:[0,"Posted ✓ 3 of your own doctors match and have been notified. I’ll message you as soon as someone applies.","Utlagt ✓ 3 av dina egna läkare matchar och har fått notis. Jag hör av mig så fort någon söker."],
+K04:[0,"Sara Lindqvist has applied for Thu 08:00–17:00.\n\nGP specialist · ✓ licence checked today\n★ 4.8 · 97% would book again · 14 shifts with you\nHours 10,350 + early bonus 300 = 10,650 SEK","Sara Lindqvist har sökt tor 08:00–17:00.\n\nSpecialist i allmänmedicin · ✓ legitimation kontrollerad i dag\n★ 4,8 · 97 % skulle boka igen · 14 pass hos er\nTimmar 10 350 + tidig bonus 300 = 10 650 kr",[['csara','Confirm Sara','Bekräfta Sara'],['wait','Wait for more','Vänta på fler'],['profile','View profile','Visa profil','l']]],
+K04r:[0,"Sara Lindqvist has applied for Thu 08:00–17:00, with a request.\n\nGP specialist · ✓ licence checked today\n★ 4.8 · 97% would book again · 14 shifts with you\nTravel 280 SEK (driving both ways), inside your cap, approved automatically\nHours 10,350 + early bonus 300 + travel 280 = 10,930 SEK","Sara Lindqvist har sökt tor 08:00–17:00, med ett önskemål.\n\nSpecialist i allmänmedicin · ✓ legitimation kontrollerad i dag\n★ 4,8 · 97 % skulle boka igen · 14 pass hos er\nResa 280 kr (bil tur och retur), inom ert tak, godkänt automatiskt\nTimmar 10 350 + tidig bonus 300 + resa 280 = 10 930 kr",[['csara','Confirm Sara','Bekräfta Sara'],['wait','Wait for more','Vänta på fler'],['profile','View profile','Visa profil','l']]],
+K05:[0,"Per Nyström has also applied.\n\nGP specialist · ✓ licence checked today\n★ 4.4 · 88% would book again · 6 shifts with you · travelling from Östersund\nHe asks for accommodation: 1,200 SEK (one night)\n\nSide by side:\nSara 10,650 SEK\nPer 11,550 SEK + train travel within your 800 SEK cap","Per Nyström har också sökt.\n\nSpecialist i allmänmedicin · ✓ legitimation kontrollerad i dag\n★ 4,4 · 88 % skulle boka igen · 6 pass hos er · reser från Östersund\nHan önskar logi: 1 200 kr (en natt)\n\nJämförelse:\nSara 10 650 kr\nPer 11 550 kr + tågresa inom ert tak på 800 kr",[['csara','Confirm Sara','Bekräfta Sara'],['cper','Confirm Per','Bekräfta Per'],['compare','Compare profiles','Jämför profiler','l']]],
+K06:[0,"Confirming Sara for Thu 08:00–17:00 at 10,650 SEK. Sign the contract with BankID:","Bekräftar Sara för tor 08:00–17:00 för 10 650 kr. Signera avtalet med BankID:",[['sign','Sign contract','Signera avtal','l']]],
+K06p:[0,"Confirming Per for Thu 08:00–17:00 at 11,550 SEK, plus train travel within your cap. Sign the contract with BankID:","Bekräftar Per för tor 08:00–17:00 för 11 550 kr, plus tågresa inom ert tak. Signera avtalet med BankID:",[['sign','Sign contract','Signera avtal','l']]],
+K07:[0,"Signed ✓ Sent to Sara for her signature. Per has been told the shift is filled.","Signerat ✓ Skickat till Sara för signering. Per har fått besked om att passet är tillsatt."],
+K07p:[0,"Signed ✓ Sent to Per for his signature. Sara has been told the shift is filled.","Signerat ✓ Skickat till Per för signering. Sara har fått besked om att passet är tillsatt."],
+K08:[0,"Sara has signed ✓ Thursday is covered.","Sara har signerat ✓ Torsdag är bemannad."],
+K08p:[0,"Per has signed ✓ Thursday is covered.","Per har signerat ✓ Torsdag är bemannad."],
+K09:[1,"Sara has sent her invoice for Thu 29 Oct.\n\nHours 9 × 1,150 = 10,350 SEK (agreed)\nEarly bonus 300 SEK (agreed)\nParking 80 SEK (not agreed in advance, receipt attached)\nTotal 10,730 SEK","Sara har skickat sin faktura för tor 29 okt.\n\nTimmar 9 × 1 150 = 10 350 kr (avtalat)\nTidig bonus 300 kr (avtalat)\nParkering 80 kr (ej avtalat i förväg, kvitto bifogat)\nTotalt 10 730 kr",[['all','Approve all','Godkänn allt'],['hours','Approve hours only','Godkänn bara timmar'],['query','Query','Fråga'],['receipt','View receipt','Visa kvitto','l']]],
+K09n:[1,"Sara has sent her invoice for Thu 29 Oct.\n\nHours 9 × 1,150 = 10,350 SEK (agreed)\nEarly bonus 300 SEK (agreed)\nTotal 10,650 SEK","Sara har skickat sin faktura för tor 29 okt.\n\nTimmar 9 × 1 150 = 10 350 kr (avtalat)\nTidig bonus 300 kr (avtalat)\nTotalt 10 650 kr",[['all','Approve all','Godkänn allt'],['query','Query','Fråga']]],
+K10:[0,"Approved ✓ {amt} SEK sent to accounts payable via Peppol. Payment due 29 Nov, directly to Sara.\n\nQuick one: how was Sara?","Attesterad ✓ {amt} kr skickad till leverantörsreskontran via Peppol. Förfaller 29 nov, betalas direkt till Sara.\n\nEn snabb fråga: hur var Sara?",[['rate','Rate now','Betygsätt nu'],['later','Later','Senare']]],
+K11:[0,"Three scores and one question, about 30 seconds. Sara won’t see your rating until she has rated you, or 14 days have passed.\n\nPunctuality and reliability?","Tre betyg och en fråga, cirka 30 sekunder. Sara ser inte ditt betyg förrän hon har betygsatt er, eller efter 14 dagar.\n\nPunktlighet och pålitlighet?",SCB],
+K12:[0,"Professionalism?","Professionalitet?",SCB],
+K13:[0,"Fit for the role?","Passade för uppdraget?",SCB],
+K14:[0,"Would you book Sara again?","Skulle ni boka Sara igen?",[['yes','Yes','Ja'],['no','No','Nej']]],
+K15:[0,"Saved ✓ Thanks. A clinical concern never goes in a rating. If you have one, report it privately to your medical director:","Sparat ✓ Tack. Medicinsk oro hör aldrig hemma i ett betyg. Har du en sådan, anmäl den privat till er medicinskt ansvarige:",[['concern','Report a concern','Anmäl oro','l']]],
+K16:[1,"Heads up, Karin: Sat 31 Oct 09:00–15:00 is still open and starts in 26 hours. No applicants from own staff or alumni.","Observera, Karin: lör 31 okt 09:00–15:00 är fortfarande obemannat och börjar om 26 timmar. Inga sökande från egen personal eller tidigare anlitade.",[['open','Open to everyone now','Öppna för alla nu'],['raise','Raise rate 10%','Höj arvodet 10 %'],['agency','Send to agency','Skicka till bemanningsbolag']]],
+K17:[0,"Done. Now 1,270 SEK/h and open to every eligible doctor in range. 11 doctors notified. I’ll tell you the moment someone applies.","Klart. Nu 1 270 kr/tim och öppet för alla behöriga läkare inom räckhåll. 11 läkare har fått notis. Jag säger till så fort någon söker."],
+K18:[1,"Your week at Björkdalen, 26 Oct–1 Nov:\n\n12 of 13 shifts filled, 9 by your own staff\nMedian time to fill: 47 minutes\nEstimated saving vs agency: 21,400 SEK\n1 shift still open next week","Din vecka på Björkdalen, 26 okt–1 nov:\n\n12 av 13 pass bemannade, 9 av egen personal\nMediantid till bemannat: 47 minuter\nUppskattad besparing mot bemanningsbolag: 21 400 kr\n1 pass är fortfarande öppet nästa vecka",[['roster','See roster','Visa schema','l'],['post','Post a shift','Lägg ut pass']]],
+K20:[0,"Happy to. Two quick checks: which Thursday, and does afternoon mean 13:00–17:00?","Gärna. Två snabba frågor: vilken torsdag, och betyder eftermiddag 13:00–17:00?",[['t29','Thu 29 Oct, 13–17','Tor 29 okt, 13–17'],['t5','Thu 5 Nov, 13–17','Tor 5 nov, 13–17'],['other','Other time','Annan tid']]],
+K21:[0,"That’s 4 shifts: Tue 3, 10, 17 and 24 Nov, 08:00–17:00, 1,150 SEK/h, est. 41,400 SEK in total. Doctors can take the whole block or single days.","Det blir 4 pass: tis 3, 10, 17 och 24 nov, 08:00–17:00, 1 150 kr/tim, beräknat 41 400 kr totalt. Läkare kan ta hela blocket eller enstaka dagar.",[['post4','Post all 4','Lägg ut alla 4'],['edit','Edit','Ändra'],['cancel','Cancel','Avbryt']]],
+K22:[1,"Sara Lindqvist has cancelled Thu 29 Oct 08:00–17:00 with 15 hours’ notice, logged as a late cancellation.\n\nI’ve re-posted it as urgent to every eligible doctor in range: 14 notified. Per Nyström applied earlier and is still available.","Sara Lindqvist har avbokat tor 29 okt 08:00–17:00 med 15 timmars varsel, registrerat som sen avbokning.\n\nJag har lagt ut passet igen som brådskande till alla behöriga läkare inom räckhåll: 14 har fått notis. Per Nyström sökte tidigare och är fortfarande tillgänglig.",[['cper','Confirm Per','Bekräfta Per'],['wait','Wait for applicants','Vänta på sökande'],['see','See shift','Visa pass','l']]],
+K23:[0,"Sent to Sara. I’ll pass on her answer.","Skickat till Sara. Jag för vidare hennes svar."],
+K24:[0,"Sara says yes to 07:30. Thursday is now 07:30–17:00 (9.5 h), est. 11,225 SEK including the bonus. You both agreed in the chat, and the change is logged on the contract.","Sara säger ja till 07:30. Torsdag är nu 07:30–17:00 (9,5 tim), beräknat 11 225 kr inklusive bonus. Ni har båda godkänt i chatten och ändringen är loggad i avtalet."],
+K25:[0,"What should I ask Sara? Type it and I’ll pass it on. The invoice stays on hold until you approve it.","Vad ska jag fråga Sara? Skriv det så för jag det vidare. Fakturan pausas tills du godkänner den."],
+K26:[0,"Sent to Sara ✓ The invoice is on hold. Decide when you’re ready:","Skickat till Sara ✓ Fakturan är pausad. Bestäm när du är redo:"],
+K27:[0,"Approved 10,650 SEK (hours and bonus). Parking 80 SEK declined, and Sara has been told.","Attesterat 10 650 kr (timmar och bonus). Parkering 80 kr avvisad, och Sara har fått besked.",[['undo','Undo','Ångra']]],
+K28:[1,"Sara reports an extra hour on Thu 29 Oct: finished 18:00 because the last patient ran over.\n\nExtra 1,150 SEK, new total 11,800 SEK.","Sara rapporterar en extra timme tor 29 okt: slutade 18:00 eftersom sista patienten drog över.\n\nExtra 1 150 kr, ny summa 11 800 kr.",[['extra','Approve extra hour','Godkänn extra timme'],['nine','Pay 9 h only','Betala bara 9 tim'],['ask','Ask Sara','Fråga Sara']]],
+K29:[0,"Sent to your 2 agencies on your agreed terms: fixed short-notice rate, no tie-ins. The shift stays open on Locumo too, and whoever fills it first gets it.","Skickat till era 2 bemanningsbolag enligt avtalade villkor: fast pris vid kort varsel, inga bindningar. Passet ligger kvar öppet på Locumo också, och den som tillsätter det först får det."],
+K30:[1,"Message from Sara Lindqvist about Thu 29 Oct:\n“{msg}”","Meddelande från Sara Lindqvist om tor 29 okt:\n”{msg}”",[['reply','Reply','Svara'],['thanks','Thanks','Tack']]],
+K31:[0,"Reply from Sara:\n“{msg}”","Svar från Sara:\n”{msg}”"],
+S01:[1,"Hi Sara, you’re on Locumo ✓ Your licence is verified.\n\nI’ll only send shifts that match you: GP specialist, within 150 km of Härnösand, Mon–Sat, from 1,000 SEK/h. Quiet hours 22:00–07:00. Type “pause” any time to stop new alerts.","Hej Sara, nu är du med i Locumo ✓ Din legitimation är verifierad.\n\nJag skickar bara pass som passar dig: specialist i allmänmedicin, inom 150 km från Härnösand, mån–lör, från 1 000 kr/tim. Tyst tid 22:00–07:00. Skriv ”paus” när du vill för att stoppa nya notiser.",[['good','Sounds good','Låter bra'],['prefs','Change preferences','Ändra inställningar','l']]],
+S02:[1,"New shift for you, and you’re seeing it first as Norrhälsan staff:\n\nThu 29 Oct, 08:00–17:00\nNorrhälsan Björkdalen, Sundsvall (≈55 km)\n1,150 SEK/h, est. 10,350 SEK\nEarly bonus +300 SEK if you apply by 13:13 today and get picked","Nytt pass för dig, och du ser det först som personal hos Norrhälsan:\n\ntor 29 okt, 08:00–17:00\nNorrhälsan Björkdalen, Sundsvall (≈55 km)\n1 150 kr/tim, beräknat 10 350 kr\nTidig bonus +300 kr om du söker före 13:13 i dag och blir vald",[['accept','Accept','Tacka ja'],['req','Accept with request','Tacka ja med önskemål'],['not','Not this time','Inte den här gången']]],
+S03:[0,"Sent to Karin at Björkdalen. I’ll tell you as soon as she confirms. You can withdraw any time before then.","Skickat till Karin på Björkdalen. Jag säger till så fort hon bekräftar. Du kan dra tillbaka när som helst innan dess.",[['withdraw','Withdraw','Dra tillbaka']]],
+S04:[0,"You’re confirmed for Thu 29 Oct at Björkdalen ✓ Early bonus included, est. 10,650 SEK. Sign your contract with BankID:","Du är bekräftad för tor 29 okt på Björkdalen ✓ Tidig bonus ingår, beräknat 10 650 kr. Signera ditt avtal med BankID:",[['sign','Sign contract','Signera avtal','l']]],
+S05:[0,"Signed by both sides ✓","Signerat av båda parter ✓",[['cal','Add to calendar','Lägg till i kalendern','l']]],
+S06:[1,"Tomorrow: Björkdalen, 08:00–17:00\n\nAddress: Björkdalsvägen 14, Sundsvall\nParking: staff car park behind the building, code on arrival\nContact: Karin Ek\nYour Cosmic login has been sent to your email.","I morgon: Björkdalen, 08:00–17:00\n\nAdress: Björkdalsvägen 14, Sundsvall\nParkering: personalparkeringen bakom huset, kod vid ankomst\nKontakt: Karin Ek\nDin Cosmic-inloggning har skickats till din e-post.",[['map','Map','Karta','l'],['msg','Message Karin','Skriv till Karin'],['good','All good','Allt klart'],['cant',"I can’t make it",'Jag kan inte komma']]],
+S07:[1,"Hope today went well. Your invoice is ready:\n\n9 h × 1,150 = 10,350 SEK\nEarly bonus 300 SEK\nTotal 10,650 SEK","Hoppas dagen gick bra. Din faktura är klar:\n\n9 tim × 1 150 = 10 350 kr\nTidig bonus 300 kr\nTotalt 10 650 kr",[['send','Send invoice','Skicka faktura'],['add','Add a line','Lägg till rad'],['hours','Hours were different','Timmarna blev andra']]],
+S08:[0,"What would you like to add?","Vad vill du lägga till?",[['travel','Travel','Resa'],['parking','Parking','Parkering'],['other','Other','Övrigt']]],
+S09:[0,"How much? Send the amount, then a photo of the receipt.","Hur mycket? Skicka beloppet och sedan ett foto av kvittot."],
+S10:[0,"Added: parking 80 SEK, receipt attached. New total 10,730 SEK. Parking wasn’t agreed in advance, so Karin will review that line.","Tillagt: parkering 80 kr, kvitto bifogat. Ny summa 10 730 kr. Parkeringen var inte avtalad i förväg, så Karin granskar den raden.",[['send','Send invoice','Skicka faktura'],['remove','Remove line','Ta bort rad']]],
+S11:[0,"Sent ✓ Invoice LOC-2026-1049. I’ll tell you when it’s approved and when it’s paid.","Skickad ✓ Faktura LOC-2026-1049. Jag säger till när den är attesterad och när den är betald."],
+S12:[0,"30 seconds: how was Björkdalen? Karin won’t see your rating until she has rated you, or 14 days have passed.\n\nInduction and handover?","30 sekunder: hur var Björkdalen? Karin ser inte ditt betyg förrän hon har betygsatt dig, eller efter 14 dagar.\n\nIntroduktion och överlämning?",SCB],
+S13:[0,"Workload as advertised?","Arbetsbelastning som utlovat?",SCB],
+S14:[0,"How you were treated?","Hur du blev bemött?",SCB],
+S15:[0,"Would you work there again?","Skulle du jobba där igen?",[['yes','Yes','Ja'],['no','No','Nej']]],
+S16:[0,"Saved ✓ Thanks. I’ll ask about payment once you’ve been paid.","Sparat ✓ Tack. Jag frågar om betalningen när du har fått betalt."],
+S18:[0,"Karin approved invoice LOC-2026-1049 ✓ {amt} SEK, due 29 Nov, paid directly by Norrhälsan.","Karin har attesterat faktura LOC-2026-1049 ✓ {amt} kr, förfaller 29 nov, betalas direkt av Norrhälsan."],
+S19:[1,"Norrhälsan has marked invoice LOC-2026-1049 as paid: {amt} SEK. Did it arrive on time?","Norrhälsan har markerat faktura LOC-2026-1049 som betald: {amt} kr. Kom pengarna i tid?",[['ontime','Yes, on time','Ja, i tid'],['notyet','Not yet','Inte än'],['late','Late','Sent']]],
+S20:[0,"What do you need?","Vad behöver du?",[['travel','Travel','Resa'],['accomm','Accommodation','Logi'],['other','Other','Övrigt']]],
+S21:[0,"How much? Björkdalen reimburses travel up to 800 SEK without asking. Mileage from Härnösand at 25 kr/mil comes to about 280 SEK.","Hur mycket? Björkdalen ersätter resa upp till 800 kr utan förfrågan. Milersättning från Härnösand på 25 kr/mil blir ungefär 280 kr."],
+S22:[0,"Accept, plus travel 280 SEK (driving both ways). That’s inside the clinic’s cap, so it’s approved automatically. Send?","Tacka ja, plus resa 280 kr (bil tur och retur). Det är inom vårdcentralens tak och godkänns automatiskt. Skicka?",[['send','Send','Skicka'],['change','Change','Ändra']]],
+S23:[0,"Björkdalen picked another doctor for Thu 29 Oct this time. Applying early is noted and helps your priority for future shifts.","Björkdalen valde en annan läkare för tor 29 okt den här gången. Att du sökte tidigt är noterat och ger dig förtur till kommande pass."],
+S24:[0,"Sorry to hear that. The shift starts in 15 hours, inside the 48-hour window, so it counts as a late cancellation on your record. Cancel anyway?","Tråkigt att höra. Passet börjar om 15 timmar, inom 48-timmarsgränsen, så det räknas som sen avbokning. Avboka ändå?",[['yes','Yes, cancel','Ja, avboka'],['keep','Keep the shift','Behåll passet'],['msg','Message Karin','Skriv till Karin']]],
+S25:[0,"Cancelled. Karin has been told, and the shift has gone out to other doctors straight away.","Avbokat. Karin har fått besked och passet har gått ut till andra läkare direkt."],
+S26:[0,"What hours did you work? Type them, for example “08:00–18:00”, and add a short reason.","Vilka tider jobbade du? Skriv dem, till exempel ”08:00–18:00”, och lägg till en kort förklaring."],
+S27:[0,"Updated:\n\n10 h × 1,150 = 11,500 SEK\nEarly bonus 300 SEK\nTotal 11,800 SEK\n\nThe extra hour goes to Karin to approve.","Uppdaterat:\n\n10 tim × 1 150 = 11 500 kr\nTidig bonus 300 kr\nTotalt 11 800 kr\n\nDen extra timmen går till Karin för godkännande.",[['send','Send invoice','Skicka faktura'],['change','Change','Ändra']]],
+S28:[1,"Message from Karin at Björkdalen:\n“Can you start at 07:30 on Thursday?”","Meddelande från Karin på Björkdalen:\n”Kan du börja 07:30 på torsdag?”",[['yes','Yes, 07:30 works','Ja, 07:30 funkar'],['no','No, keep 08:00','Nej, behåll 08:00'],['reply','Reply','Svara']]],
+S29:[0,"Thanks, I’ve told Karin. Thursday is now 07:30–17:00 (9.5 h), est. 11,225 SEK including the bonus.","Tack, jag har meddelat Karin. Torsdag är nu 07:30–17:00 (9,5 tim), beräknat 11 225 kr inklusive bonus."],
+S30:[0,"Type your message and I’ll send it to Karin.","Skriv ditt meddelande så skickar jag det till Karin."],
+S31:[0,"Sent to Karin ✓","Skickat till Karin ✓"],
+S32:[0,"Pause new shift alerts for how long? Booked shifts and reminders still come through.","Pausa nya notiser om pass hur länge? Bokade pass och påminnelser kommer fortfarande.",[['week','1 week','1 vecka'],['until','Until I say','Tills jag säger till'],['cancel','Cancel','Avbryt']]],
+S33:[0,"Paused until Mon 2 Nov ✓ Type “resume” any time to start again.","Pausat till mån 2 nov ✓ Skriv ”starta” när du vill börja igen."],
+S33b:[0,"Paused until you say ✓ Type “resume” any time to start again.","Pausat tills du säger till ✓ Skriv ”starta” när du vill börja igen."],
+S34:[1,"Message from Karin about invoice LOC-2026-1049:\n“{msg}”\nThe invoice is on hold until she approves it.","Meddelande från Karin om faktura LOC-2026-1049:\n”{msg}”\nFakturan är pausad tills hon godkänner den.",[['reply','Reply','Svara']]],
+S35:[0,"Reply from Karin:\n“{msg}”","Svar från Karin:\n”{msg}”"],
+S36:[0,"Karin approved {amt} SEK. {why}","Karin har attesterat {amt} kr. {why}"],
+R01:[0,"Posted as urgent ✓ 14 doctors in range notified.","Utlagt som brådskande ✓ 14 läkare inom räckhåll har fått notis."],
+R02:[0,"What should change?","Vad ska ändras?"],
+R03:[0,"OK, I’ll tell you when the next one applies.","Okej, jag säger till när nästa söker."],
+R04:[0,"Done. Open to every eligible doctor in range. 11 notified.","Klart. Öppet för alla behöriga läkare inom räckhåll. 11 har fått notis."],
+R05:[0,"What do you need?","Vad behöver du?"],
+R06:[0,"Type the date and time you need.","Skriv datum och tid du behöver."],
+R07:[0,"Posted 4 shifts ✓","4 pass utlagda ✓"],
+R08:[0,"Cancelled. Nothing changed.","Avbrutet. Inget har ändrats."],
+R09:[0,"OK, I’ll tell you the moment someone applies.","Okej, jag säger till så fort någon söker."],
+R10:[0,"Approved 10,650 SEK. Sara has been told the extra hour was declined.","Attesterat 10 650 kr. Sara har fått besked om att den extra timmen inte godkändes."],
+R11:[0,"Type your reply and I’ll send it.","Skriv ditt svar så skickar jag det."],
+R12:[0,"No problem. I’ll keep sending matching shifts.","Inga problem. Jag fortsätter skicka pass som passar dig."],
+R13:[0,"Withdrawn. Karin has been told.","Tillbakadraget. Karin har fått besked."],
+R14:[0,"Great, good luck tomorrow.","Toppen, lycka till i morgon."],
+R15:[0,"Thanks, noted.","Tack, noterat."],
+R16:[0,"I’ll remind Norrhälsan and check with you in 3 days.","Jag påminner Norrhälsan och hör av mig igen om 3 dagar."],
+R17:[0,"Good, you’re still booked.","Bra, du är fortfarande bokad."],
+R18:[0,"Told Karin. Still 08:00.","Jag har meddelat Karin. Fortfarande 08:00."],
+R19:[0,"Sorry, I didn’t catch that. Try: GP Thursday 8–17","Förlåt, det förstod jag inte. Prova: Läkare torsdag 8–17"],
+R21:[0,"Alerts are on again ✓","Notiserna är på igen ✓"],
+R22:[0,"Sorry, I didn’t catch that. Tap a button, or type “pause” to stop alerts.","Förlåt, det förstod jag inte. Tryck på en knapp, eller skriv ”paus” för att stoppa notiser."],
+R23:[0,"OK, I’ll remind you tomorrow.","Okej, jag påminner dig i morgon."],
+R24:[0,"Great.","Toppen."]
+};
+const TYPED={
+ need:["Need a GP for Thursday 8 to 5, Dr Holm is off sick","Behöver en läkare på torsdag 8 till 17, dr Holm är sjuk"],
+ unclear:["Can I get someone Thursday afternoon?","Kan jag få någon på torsdag eftermiddag?"],
+ block:["Every Tuesday in November, 8 to 5","Varje tisdag i november, 8 till 17"],
+ ask:["Ask Sara if she can start at 07:30 on Thursday","Fråga Sara om hon kan börja 07:30 på torsdag"],
+ query:["Parking wasn’t agreed. Please use the staff car park next time.","Parkeringen var inte avtalad. Använd personalparkeringen nästa gång."],
+ park:["80","80"],
+ travel:["280, driving both ways","280, bil tur och retur"],
+ hours:["08:00–18:00, last patient ran over","08:00–18:00, sista patienten drog över"],
+ msg:["Running 10 minutes late, roadworks on the E4","Är 10 minuter sen, vägarbete på E4:an"],
+ pause:["pause","paus"]
+};
+
+/* ============ flows ============ */
+const T=(d,hm)=>Date.parse('2026-'+d+'T'+hm+':00+01:00');
+const C=(en,sv)=>[en,sv];
+const MAIN=[
+ {m:'type:k:need',txt:'need',t:T('10-26','09:12'),c:C('Monday 26 Oct. Karin types what she needs, in her own words.','Måndag 26 okt. Karin skriver vad hon behöver, med egna ord.')},
+ {m:'K02:post',t:T('10-26','09:13'),c:C('Locumo plays the shift back. Karin checks it and posts.','Locumo bekräftar passet. Karin kontrollerar och lägger ut.')},
+ {m:'S02:accept',t:T('10-26','09:40'),c:C('Sara sees it first, as own staff, inside the bonus window. She accepts.','Sara ser passet först, som egen personal, inom bonusfönstret. Hon tackar ja.')},
+ {m:'K04:wait',t:T('10-26','09:41'),c:C('Karin waits to see if anyone else applies.','Karin väntar på fler sökande.')},
+ {auto:'per',t:T('10-26','13:20'),c:C('Four hours on, the shift opens to alumni. Per applies with an accommodation request.','Fyra timmar senare öppnas passet för tidigare anlitade. Per söker och önskar logi.')},
+ {m:'K05:csara',t:T('10-26','14:05'),c:C('Karin compares total cost side by side and picks Sara.','Karin jämför totalkostnaden och väljer Sara.')},
+ {m:'K06:sign',t:T('10-26','14:06'),c:C('Karin signs the contract with BankID on a short web page.','Karin signerar avtalet med BankID på en kort webbsida.')},
+ {m:'S04:sign',t:T('10-26','14:30'),c:C('Sara signs too. Thursday is covered.','Sara signerar också. Torsdag är bemannad.')},
+ {auto:'daybefore',t:T('10-28','17:00'),c:C('Wednesday. Sara gets everything she needs for tomorrow.','Onsdag. Sara får allt hon behöver inför morgondagen.')},
+ {m:'S06:good',t:T('10-28','17:02')},
+ {auto:'invoice',t:T('10-29','17:15'),c:C('Thursday, after the shift. The invoice is already filled in from the contract.','Torsdag efter passet. Fakturan är redan ifylld från avtalet.')},
+ {m:'S07:add',t:T('10-29','17:30'),c:C('Sara adds a parking cost.','Sara lägger till en parkeringskostnad.')},
+ {m:'S08:parking',t:T('10-29','17:31')},
+ {m:'type:s:park',txt:'park',t:T('10-29','17:33'),c:C('She types the amount and sends a photo of the receipt.','Hon skriver beloppet och skickar ett foto på kvittot.')},
+ {m:'S10:send',t:T('10-29','17:40'),c:C('The invoice goes to Karin. Only the parking line needs her review.','Fakturan går till Karin. Bara parkeringsraden behöver granskas.')},
+ {m:'S12:score',v:'4',t:T('10-29','17:41'),c:C('Sara rates the practice. Ratings stay hidden until both sides have rated.','Sara betygsätter vårdcentralen. Betygen är dolda tills båda har betygsatt.')},
+ {m:'S13:score',v:'5',t:T('10-29','17:41')},{m:'S14:score',v:'5',t:T('10-29','17:42')},{m:'S15:yes',t:T('10-29','17:42')},
+ {auto:'risk',t:T('10-30','07:00'),c:C('Friday 07:00. Saturday is still empty, so Locumo warns Karin.','Fredag 07:00. Lördagen är fortfarande obemannad, så Locumo varnar Karin.')},
+ {m:'K16:raise',t:T('10-30','07:05'),c:C('Karin raises the rate and opens Saturday to everyone.','Karin höjer arvodet och öppnar lördagen för alla.')},
+ {m:'K09:all',t:T('10-30','08:45'),c:C('Karin approves the invoice. It goes to accounts payable via Peppol.','Karin attesterar fakturan. Den går till leverantörsreskontran via Peppol.')},
+ {m:'K10:rate',t:T('10-30','08:46'),c:C('Karin rates Sara.','Karin betygsätter Sara.')},
+ {m:'K11:score',v:'5',t:T('10-30','08:46')},{m:'K12:score',v:'5',t:T('10-30','08:47')},{m:'K13:score',v:'4',t:T('10-30','08:47')},{m:'K14:yes',t:T('10-30','08:47')},
+ {auto:'weekly',t:T('11-02','07:30'),c:C('Monday 2 Nov. Karin’s weekly summary, with the saving against agency.','Måndag 2 nov. Karins veckosammanfattning, med besparingen mot bemanningsbolag.')},
+ {auto:'paid',t:T('11-27','10:00'),c:C('27 Nov. Norrhälsan pays Sara directly, and Locumo asks if it was on time.','27 nov. Norrhälsan betalar Sara direkt, och Locumo frågar om det kom i tid.')},
+ {m:'S19:ontime',t:T('11-27','10:02'),c:C('Sara’s answer becomes the practice’s paid-on-time score.','Saras svar blir vårdcentralens betyg för betalning i tid.')}
+];
+const BRANCH={
+ request:{at:2,steps:[
+  {m:'S02:req',t:T('10-26','09:40'),c:C('Sara accepts but asks for travel.','Sara tackar ja men önskar reseersättning.')},
+  {m:'S20:travel',t:T('10-26','09:40')},
+  {m:'type:s:travel',txt:'travel',t:T('10-26','09:41'),c:C('She types the amount. Locumo checks it against the clinic’s cap.','Hon skriver beloppet. Locumo jämför med vårdcentralens tak.')},
+  {m:'S22:send',t:T('10-26','09:41'),c:C('Inside the cap, so it’s approved automatically. Karin sees the new total.','Inom taket, så det godkänns automatiskt. Karin ser den nya summan.')}]},
+ per:{at:5,steps:[
+  {m:'K05:cper',t:T('10-26','14:05'),c:C('Karin picks Per instead.','Karin väljer Per i stället.')},
+  {m:'K06p:sign',t:T('10-26','14:06'),c:C('Karin signs. Sara is told she wasn’t picked this time.','Karin signerar. Sara får besked om att hon inte valdes den här gången.')}]},
+ cancel:{at:9,steps:[
+  {m:'S06:cant',t:T('10-28','17:05'),c:C('Sara can’t make it after all.','Sara kan inte komma ändå.')},
+  {m:'S24:yes',t:T('10-28','17:05'),c:C('It counts as a late cancellation. Karin is told and the shift goes out as urgent.','Det räknas som sen avbokning. Karin får besked och passet går ut som brådskande.')},
+  {m:'K22:cper',t:T('10-28','17:20'),c:C('Per is still available. Karin confirms him.','Per är fortfarande tillgänglig. Karin bekräftar honom.')},
+  {m:'K06p:sign',t:T('10-28','17:21')}]},
+ hours:{at:11,steps:[
+  {m:'S07:hours',t:T('10-29','18:10'),c:C('Sara worked an extra hour.','Sara jobbade en timme extra.')},
+  {m:'type:s:hours',txt:'hours',t:T('10-29','18:11')},
+  {m:'S27:send',t:T('10-29','18:12'),c:C('The extra hour goes to Karin for approval.','Den extra timmen går till Karin för godkännande.')},
+  {m:'K28:extra',t:T('10-30','08:45'),c:C('Karin approves the extra hour.','Karin godkänner den extra timmen.')}]},
+ msgk:{at:8,steps:[
+  {m:'type:k:ask',txt:'ask',t:T('10-27','10:00'),c:C('Tuesday. Karin asks Sara to start earlier, through Locumo.','Tisdag. Karin ber Sara börja tidigare, via Locumo.')},
+  {m:'S28:yes',t:T('10-27','10:20'),c:C('Sara agrees. Both sides see the updated shift.','Sara säger ja. Båda ser det uppdaterade passet.')}]},
+ msgs:{at:9,steps:[
+  {m:'S06:msg',t:T('10-29','07:48'),c:C('Thursday morning. Sara is running late.','Torsdag morgon. Sara är sen.')},
+  {m:'type:s:msg',txt:'msg',t:T('10-29','07:48')},
+  {m:'K30:thanks',t:T('10-29','07:50'),c:C('Karin gets the message and replies in one tap.','Karin får meddelandet och svarar med ett tryck.')}]},
+ unclear:{at:0,steps:[
+  {m:'type:k:unclear',txt:'unclear',t:T('10-26','09:12'),c:C('Karin’s request is vague. Locumo asks instead of guessing.','Karins förfrågan är otydlig. Locumo frågar i stället för att gissa.')},
+  {m:'K20:t29',t:T('10-26','09:13')},
+  {m:'K02a:post',t:T('10-26','09:13')}]},
+ block:{at:0,steps:[
+  {m:'type:k:block',txt:'block',t:T('10-26','09:12'),c:C('Karin books a whole month of Tuesdays in one message.','Karin bokar en hel månads tisdagar i ett meddelande.')},
+  {m:'K21:post4',t:T('10-26','09:13')}]},
+ query:{at:21,steps:[
+  {m:'K09:query',t:T('10-30','08:45'),c:C('Karin queries the parking line.','Karin frågar om parkeringsraden.')},
+  {m:'type:k:query',txt:'query',t:T('10-30','08:46')},
+  {m:'K09:hours',t:T('10-30','08:47'),c:C('She approves hours and bonus, and declines the parking.','Hon godkänner timmar och bonus och avvisar parkeringen.')}]},
+ agency:{at:20,steps:[{m:'K16:agency',t:T('10-30','07:05'),c:C('Karin sends Saturday to her agencies, on terms agreed in advance.','Karin skickar lördagen till sina bemanningsbolag, på villkor som är avtalade i förväg.')}]},
+ pause:{at:0,steps:[
+  {m:'type:s:pause',txt:'pause',t:T('10-26','08:30'),c:C('Sara is going on holiday and pauses new alerts.','Sara ska på semester och pausar nya notiser.')},
+  {m:'S32:week',t:T('10-26','08:30')}]}
+};
+
+/* ============ state ============ */
+let S,HIST=[],LANG='en';
+try{const l=localStorage.getItem('locumo-chat-lang');if(l==='sv'||l==='en')LANG=l}catch(e){}
+const li=()=>LANG==='sv'?1:0;
+const u=k=>UI[k][li()];
+function fresh(){return{flow:'main',step:0,clock:T('10-26','09:00'),chat:{k:[],s:[]},await:{k:null,s:null},inv:10650,pick:'sara',sheet:null,off:false,seq:0,tab:'k',unread:{k:0,s:0},ended:false}}
+function snap(){HIST.push(JSON.stringify(S));if(HIST.length>200)HIST.shift()}
+function flowSteps(){return S.flow==='main'?MAIN:BRANCH[S.flow].steps}
+function cur(){return flowSteps()[S.step]}
+
+/* ============ chat helpers ============ */
+function L(p,id,vars){S.chat[p].push({id:++S.seq,who:'them',mid:id,vars:vars||null,at:S.clock,used:false,ts:Date.now()});bump(p)}
+function U(p,text,extra){S.chat[p].push(Object.assign({id:++S.seq,who:'me',text,at:S.clock,ts:Date.now()},extra||{}));}
+function bump(p){if(S.tab!==p)S.unread[p]++}
+function btnLabel(mid,key){const b=(M[mid][3]||[]).find(x=>x[0]===key);return b?[b[1],b[2]]:[key,key]}
+function lastMsg(p,mid,unused){const a=S.chat[p];for(let i=a.length-1;i>=0;i--){const m=a[i];if(m.who==='them'&&m.mid===mid&&(!unused||!m.used))return m}return null}
+const SARA_DONE={k:'K07',s:'S04'};
+
+/* ============ handlers ============ */
+function confirm(d){S.pick=d;L('k',d==='per'?'K06p':'K06')}
+function signedKarin(){if(S.pick==='per'){L('k','K07p');if(!S.chat.s.some(m=>m.mid==='S25'))L('s','S23');L('k','K08p')}else{L('k','K07');L('s','S04')}}
+function relay(from,text){if(from==='k'){if(S.await.k==='query'){L('k','K26');L('k','K09');L('s','S34',{msg:text})}else{L('s','S35',{msg:text});}}else{if(S.await.s==='msgK'){L('s','S31');L('k','K30',{msg:text})}else{L('k','K31',{msg:text})}}}
+const SC_NEXT={K11:'K12',K12:'K13',K13:'K14',S12:'S13',S13:'S14',S14:'S15'};
+const H={
+ 'K01:got':()=>{},'K01:defaults':()=>sheet('settings','k'),
+ 'K02:post':()=>{L('k','K03');L('s','S02')},'K02:urgent':()=>{L('k','R01');L('s','S02')},'K02:edit':()=>{L('k','R02');S.await.k='edit'},
+ 'K02a:post':()=>L('k','K03'),'K02a:urgent':()=>L('k','R01'),'K02a:edit':()=>{L('k','R02');S.await.k='edit'},
+ 'K04:csara':()=>confirm('sara'),'K04:wait':()=>L('k','R03'),'K04:profile':()=>sheet('profile','k'),
+ 'K04r:csara':()=>confirm('sara'),'K04r:wait':()=>L('k','R03'),'K04r:profile':()=>sheet('profile','k'),
+ 'K05:csara':()=>confirm('sara'),'K05:cper':()=>confirm('per'),'K05:compare':()=>sheet('compare','k'),
+ 'K06:sign':()=>sheet('contract','k'),'K06p:sign':()=>sheet('contract','k'),
+ 'K09:all':()=>{const a=S.await.k;L('k','K10',{amt:S.inv});L('s','S18',{amt:S.inv})},
+ 'K09:hours':()=>{S.inv=10650;L('k','K27');L('s','S36',{amt:10650,why:['The parking line (80 SEK) was declined.','Parkeringsraden (80 kr) avvisades.']})},
+ 'K09:query':()=>{L('k','K25');S.await.k='query'},'K09:receipt':()=>sheet('receipt','k'),
+ 'K09n:all':()=>{L('k','K10',{amt:S.inv});L('s','S18',{amt:S.inv})},'K09n:query':()=>{L('k','K25');S.await.k='query'},
+ 'K10:rate':()=>L('k','K11'),'K10:later':()=>L('k','R23'),
+ 'K14:yes':()=>L('k','K15'),'K14:no':()=>L('k','K15'),'K15:concern':()=>sheet('concern','k'),
+ 'K16:open':()=>L('k','R04'),'K16:raise':()=>L('k','K17'),'K16:agency':()=>L('k','K29'),
+ 'K18:roster':()=>sheet('roster','k'),'K18:post':()=>{L('k','R05');S.await.k='edit'},
+ 'K20:t29':()=>L('k','K02a',{d:['Thu 29 Oct','tor 29 okt']}),'K20:t5':()=>L('k','K02a',{d:['Thu 5 Nov','tor 5 nov']}),'K20:other':()=>{L('k','R06');S.await.k='edit'},
+ 'K21:post4':()=>L('k','R07'),'K21:edit':()=>{L('k','R02');S.await.k='edit'},'K21:cancel':()=>L('k','R08'),
+ 'K22:cper':()=>confirm('per'),'K22:wait':()=>L('k','R09'),'K22:see':()=>sheet('roster','k'),
+ 'K26:hours':()=>H['K09:hours'](),
+ 'K27:undo':()=>{S.inv=10730;L('k','K09')},
+ 'K28:extra':()=>{S.inv=11800;L('k','K10',{amt:11800});L('s','S18',{amt:11800})},'K28:nine':()=>{S.inv=10650;L('k','R10');L('s','S36',{amt:10650,why:['The extra hour was declined.','Den extra timmen godkändes inte.']})},'K28:ask':()=>{L('k','K25');S.await.k='query'},
+ 'K30:reply':()=>{L('k','R11');S.await.k='reply'},'K30:thanks':()=>L('s','S35',{msg:['Thanks','Tack']}),
+ 'S01:good':()=>{},'S01:prefs':()=>sheet('prefs','s'),
+ 'S02:accept':()=>{L('s','S03');L('k','K04')},'S02:req':()=>L('s','S20'),'S02:not':()=>L('s','R12'),
+ 'S03:withdraw':()=>L('s','R13'),
+ 'S04:sign':()=>sheet('contract','s'),'S05:cal':()=>toast(u('cal')),
+ 'S06:map':()=>toast(u('map')),'S06:msg':()=>{L('s','S30');S.await.s='msgK'},'S06:good':()=>L('s','R14'),'S06:cant':()=>L('s','S24'),
+ 'S07:send':()=>{L('s','S11');L('k','K09n')},'S07:add':()=>L('s','S08'),'S07:hours':()=>{L('s','S26');S.await.s='hours'},
+ 'S08:travel':()=>{L('s','S09');S.await.s='amount'},'S08:parking':()=>{L('s','S09');S.await.s='amount'},'S08:other':()=>{L('s','S09');S.await.s='amount'},
+ 'S10:send':()=>{L('s','S11');L('k','K09');L('s','S12')},'S10:remove':()=>{S.inv=10650;L('s','S07')},
+ 'S15:yes':()=>L('s','S16'),'S15:no':()=>L('s','S16'),
+ 'S19:ontime':()=>L('s','R15'),'S19:late':()=>L('s','R15'),'S19:notyet':()=>L('s','R16'),
+ 'S20:travel':()=>{L('s','S21');S.await.s='travel'},'S20:accomm':()=>{L('s','S21');S.await.s='travel'},'S20:other':()=>{L('s','S21');S.await.s='travel'},
+ 'S22:send':()=>{L('s','S03');L('k','K04r')},'S22:change':()=>{L('s','S21');S.await.s='travel'},
+ 'S24:yes':()=>{L('s','S25');L('k','K22')},'S24:keep':()=>L('s','R17'),'S24:msg':()=>{L('s','S30');S.await.s='msgK'},
+ 'S27:send':()=>{L('s','S11');L('k','K28')},'S27:change':()=>{L('s','S26');S.await.s='hours'},
+ 'S28:yes':()=>{L('s','S29');L('k','K24')},'S28:no':()=>{L('s','R18');L('k','K31',{msg:['No, keep 08:00','Nej, behåll 08:00']})},'S28:reply':()=>{L('s','R11');S.await.s='reply'},
+ 'S32:week':()=>L('s','S33'),'S32:until':()=>L('s','S33b'),'S32:cancel':()=>L('s','R08'),
+ 'S34:reply':()=>{L('s','R11');S.await.s='reply'}
+};
+const AUTO={
+ per:()=>L('k','K05'),
+ daybefore:()=>L('s','S06'),
+ invoice:()=>L('s','S07'),
+ risk:()=>L('k','K16'),
+ weekly:()=>L('k','K18'),
+ paid:()=>L('s','S19',{amt:S.inv})
+};
+function scoreHandler(mid,val){const nx=SC_NEXT[mid];if(nx)L(mid[0]==='K'?'k':'s',nx)}
+
+/* typed input */
+function parse(p,text){
+  const t=text.toLowerCase(),aw=S.await[p];S.await[p]=null;
+  if(p==='k'){
+    if(aw==='query'||aw==='reply'){S.await.k=aw;relay('k',text);S.await.k=null;return'type:k:query'}
+    if(/tues|tisdag/.test(t)){L('k','K21');return'type:k:block'}
+    if(/afternoon|eftermiddag/.test(t)){L('k','K20');return'type:k:unclear'}
+    if(/sara/.test(t)&&/07[:.]?30|7[:.]30/.test(t)){L('k','K23');L('s','S28');return'type:k:ask'}
+    if(/(thu|tor|gp|läkare|doctor|tomorrow|morgon)/.test(t)&&/\d/.test(t)){L('k','K02');return'type:k:need'}
+    L('k','R19');return null;
+  }
+  if(aw==='amount'){const n=parseInt(t.replace(/\D/g,''),10);if(n>0){S.await.s='photo';return'type:s:amt'}S.await.s='amount';L('s','R22');return null}
+  if(aw==='photo'){S.await.s='photo';L('s','R22');return null}
+  if(aw==='travel'){L('s','S22');return'type:s:travel'}
+  if(aw==='hours'){S.inv=11800;L('s','S27');return'type:s:hours'}
+  if(aw==='msgK'||aw==='reply'){S.await.s=aw;relay('s',text);S.await.s=null;return'type:s:msg'}
+  if(/^(pause|paus)/.test(t)){L('s','S32');return'type:s:pause'}
+  if(/resume|starta/.test(t)){L('s','R21');return null}
+  L('s','R22');return null;
+}
+function sendPhoto(){if(S.await.s!=='photo'){toast(u('none'));return null}S.await.s=null;U('s','',{photo:true});S.inv=10730;L('s','S10');return'type:s:park'}
+
+/* ============ engine ============ */
+function advanceIf(key){const st=cur();if(!st||S.ended)return;const m=st.m;if(!m)return;
+  if(key===m||(m.endsWith(':score')&&key&&key.startsWith(m))){S.step++;checkEnd()}else if(key&&!key.startsWith('type:s:amt')&&!key.startsWith('open:'))S.off=true}
+function checkEnd(){if(S.step>=flowSteps().length)S.ended=true}
+function press(p,msg,key,val){
+  // msg: message object; key: button key
+  const mid=msg.mid,b=(M[mid][3]||[]).find(x=>x[0]===key),type=b?b[3]||'r':'r';
+  const st=cur();if(st&&st.m&&(st.m===mid+':'+key||st.m===mid+':score')&&st.t)S.clock=Math.max(S.clock,st.t);
+  if(type==='s'){openSheet({type:'score',p,mid,msgId:msg.id});return}
+  if(type==='l'){const f=H[mid+':'+key];if(f){S.sheetFor=mid+':'+key;f()}render();return}
+  msg.used=true;U(p,btnLabel(mid,key));
+  const f=H[mid+':'+key];if(f)f();
+  advanceIf(mid+':'+key);render();
+}
+function chooseScore(val){const sh=S.sheet;const msg=S.chat[sh.p].find(m=>m.id===sh.msgId);S.sheet=null;msg.used=true;const lab=SC.find(x=>x[0]===val);U(sh.p,[lab[1],lab[2]]);scoreHandler(sh.mid,val);advanceIf(sh.mid+':score:'+val);render()}
+function typed(p,text){
+  const st=cur();if(st&&st.m&&st.m.startsWith('type:'+p)&&st.t)S.clock=Math.max(S.clock,st.t);
+  U(p,text);const k=parse(p,text);
+  if(k==='type:s:amt'){render();return}
+  advanceIf(k);render();
+}
+function nextStep(silent){
+  if(S.sheet){ if(S.sheet.type==='contract'){doSign(true);return} if(S.sheet.type==='score'){const st=cur();chooseScore(st&&st.v||'5');return} S.sheet=null;render();return}
+  const st=cur();
+  if(!st||S.ended){if(!silent)toast(u(S.flow==='main'?'endmain':'endbr'));return}
+  if(st.t)S.clock=Math.max(S.clock,st.t);
+  if(st.auto){AUTO[st.auto]();S.step++;checkEnd();if(!silent)render();return}
+  const [a,b,c]=st.m.split(':');
+  if(a==='type'){
+    const txt=TYPED[st.txt][li()];
+    if(st.txt==='park'){U('s',txt);S.await.s=null;S.await.s='photo';sendPhoto();S.step++;checkEnd();if(!silent)render();return}
+    U(b,txt);const k=parse(b,txt);advanceIf(k);if(!silent)render();return;
+  }
+  const p=a[0]==='K'?'k':'s',msg=lastMsg(p,a,true)||lastMsg(p,a,false);
+  if(!msg){toast(u('none'));return}
+  const bt=(M[a][3]||[]).find(x=>x[0]===b),type=bt?bt[3]||'r':'r';
+  if(type==='s'){msg.used=true;const lab=SC.find(x=>x[0]===st.v);U(p,[lab[1],lab[2]]);scoreHandler(a,st.v);S.step++;checkEnd();if(!silent)render();return}
+  if(type==='l'&&b==='sign'){ if(silent){completeSign(p);return} S.sheetFor=a+':sign';sheet('contract',p);render();return}
+  msg.used=true;U(p,btnLabel(a,b));const f=H[a+':'+b];if(f)f();S.step++;checkEnd();if(!silent)render();
+}
+function completeSign(p){S.sheet=null;if(p==='k'){signedKarin()}else{L('s','S05');L('k','K08')}
+  const st=cur();if(st&&st.m&&st.m.endsWith(':sign')){S.step++;checkEnd()}}
+function doSign(fromNext){const sh=S.sheet;if(!sh||sh.busy)return;sh.busy=true;render();
+  setTimeout(()=>{sh.busy=false;sh.done=true;render();setTimeout(()=>{completeSign(sh.p);autoTab();render()},650)},fromNext?700:1100)}
+
+/* ============ sheets ============ */
+function sheet(type,p){S.sheet={type,p}}
+function openSheet(o){S.sheet=o;render()}
+const SH={
+ url:['locumo.se/','locumo.se/'],
+ contract:['Assignment agreement (uppdragsavtal)','Uppdragsavtal'],parties:['Parties','Parter'],cp:['Care provider','Vårdgivare'],dr:['Doctor','Läkare'],asg:['Assignment','Uppdrag'],fee:['Fee','Ersättning'],terms:['Terms','Villkor'],
+ t1:['Works under the care provider’s medical responsibility and local routines.','Arbetar under vårdgivarens medicinska ansvar och lokala rutiner.'],
+ t2:['Cancellation less than 48 h before start is late. If the practice cancels late, 50% of booked hours is paid.','Avbokning senare än 48 tim före start är sen. Avbokar vårdgivaren sent betalas 50 % av bokade timmar.'],
+ t3:['The doctor invoices after the shift. Payment within 30 days, directly to the doctor.','Läkaren fakturerar efter passet. Betalning inom 30 dagar, direkt till läkaren.'],
+ t4:['Locumo provides the platform only and is not a party to this agreement.','Locumo tillhandahåller endast plattformen och är inte part i avtalet.'],
+ signb:['Sign with BankID','Signera med BankID'],opening:['Opening BankID… (simulated)','Öppnar BankID… (simulerat)'],signed:['Signed ✓','Signerat ✓'],
+ prof:['Doctor profile','Läkarprofil'],lic:['Licence','Legitimation'],verified:['✓ Verified in register today (simulated)','✓ Verifierad i registret i dag (simulerat)'],grade:['Level','Nivå'],gp:['GP specialist','Specialist i allmänmedicin'],yrs:['Years since licence','År sedan legitimation'],langs:['Languages','Språk'],ehr:['Records systems','Journalsystem'],rating:['Rating','Betyg'],docs:['Documents','Dokument'],docsv:['Liability insurance, CPR, F-tax: all valid','Ansvarsförsäkring, HLR, F-skatt: alla giltiga'],
+ cmp:['Compare applicants','Jämför sökande'],dist:['Distance','Avstånd'],here:['Shifts here','Pass här'],reqs:['Requests','Önskemål'],tot:['Total cost','Totalkostnad'],nreq:['None','Inga'],acc:['Accommodation 1,200 SEK','Logi 1 200 kr'],conf:['Confirm','Bekräfta'],
+ roster:['Roster · Björkdalen','Schema · Björkdalen'],
+ set:['Practice settings','Inställningar för vårdcentralen'],prefs:['Doctor preferences','Läkarens inställningar'],save:['Save','Spara'],
+ conc:['Private concern','Privat medicinsk anmälan'],concb:['Goes to your medical director only. Never shown in ratings. Consider whether it should also be reported to IVO.','Går bara till er medicinskt ansvarige. Syns aldrig i betyg. Överväg om det även ska anmälas till IVO.'],sendb:['Send privately','Skicka privat'],
+ rcpt:['Receipt','Kvitto'],score:['Choose score','Välj betyg']
+};
+const sh=k=>SH[k][li()];
+function shiftStatus(){const posted=S.chat.k.some(m=>m.mid==='K03');const conf=S.chat.k.some(m=>m.mid==='K08'||m.mid==='K08p');const canc=S.chat.k.some(m=>m.mid==='K22');
+ if(conf)return[S.pick==='per'?'Per Nyström':'Sara Lindqvist',''];if(canc)return[LANG==='sv'?'Brådskande, utlagt':'Urgent, posted','w'];
+ const apps=S.chat.k.filter(m=>m.mid==='K04'||m.mid==='K05'||m.mid==='K04r').length;if(apps)return[(LANG==='sv'?'Sökande: ':'Applicants: ')+apps,'w'];
+ if(posted)return[LANG==='sv'?'Utlagt':'Posted','w'];return[LANG==='sv'?'Lucka':'Gap','w']}
+function sheetHTML(){
+  const s=S.sheet;if(!s)return'';let h='';
+  const close=`<button class="btn" data-a="closesheet">${u('back2')}</button>`;
+  if(s.type==='score'){
+    const st=cur(),want=st&&st.m===s.mid+':score'?st.v:null;
+    h=`<h3>${sh('score')}</h3>${SC.map(x=>`<button class="opt ${want===x[0]?'pulse':''}" data-a="score" data-v="${x[0]}">${x[1+li()]}</button>`).join('')}`;
+  }else if(s.type==='contract'){
+    const per=S.pick==='per',who=per?'Per Nyström':'Sara Lindqvist',legit=per?'391044':'418204';
+    const fee=per?(LANG==='sv'?'1 150 kr/tim × 9 = 10 350 kr<br>Logi 1 200 kr<br>Resa enligt kvitto, max 800 kr':'1,150 SEK/h × 9 = 10,350 SEK<br>Accommodation 1,200 SEK<br>Travel per receipt, max 800 SEK'):(LANG==='sv'?'1 150 kr/tim × 9 = 10 350 kr<br>Tidig bonus 300 kr<br><b>Totalt 10 650 kr</b>':'1,150 SEK/h × 9 = 10,350 SEK<br>Early bonus 300 SEK<br><b>Total 10,650 SEK</b>');
+    h=`<span class="url">${sh('url')}c/LOC-2026-1049</span><h3>${sh('contract')}</h3>
+    <dl><dt>${sh('cp')}</dt><dd>Norrhälsan Vård AB, Björkdalen</dd><dt>${sh('dr')}</dt><dd>${who} · <span style="font-family:var(--mono)">${legit}</span></dd><dt>${sh('asg')}</dt><dd>${LANG==='sv'?'tor 29 okt, 08:00–17:00 · Björkdalsvägen 14, Sundsvall':'Thu 29 Oct, 08:00–17:00 · Björkdalsvägen 14, Sundsvall'}</dd><dt>${sh('fee')}</dt><dd>${fee}</dd></dl>
+    <b>${sh('terms')}</b><ul><li>${sh('t1')}</li><li>${sh('t2')}</li><li>${sh('t3')}</li><li>${sh('t4')}</li></ul>
+    ${s.done?`<p class="ok">${sh('signed')}</p>`:s.busy?`<p><span class="spin"></span> ${sh('opening')}</p>`:`<div class="row"><button class="btn pri" data-a="sign" id="signbtn">${sh('signb')}</button>${close}</div>`}`;
+  }else if(s.type==='profile'){
+    h=`<span class="url">${sh('url')}d/sara-lindqvist</span><h3>${sh('prof')}: Sara Lindqvist</h3><p class="ok">${sh('verified')}</p>
+    <dl><dt>${sh('lic')}</dt><dd style="font-family:var(--mono)">418204</dd><dt>${sh('grade')}</dt><dd>${sh('gp')}</dd><dt>${sh('yrs')}</dt><dd>12</dd><dt>${sh('langs')}</dt><dd>SV, EN</dd><dt>${sh('ehr')}</dt><dd>Cosmic, TakeCare</dd><dt>${sh('rating')}</dt><dd>★ ${LANG==='sv'?'4,8':'4.8'} · 97%</dd><dt>${sh('docs')}</dt><dd>${sh('docsv')}</dd></dl>${close}`;
+  }else if(s.type==='compare'){
+    const col=(n,d,r,re,sh2,tot)=>`<div><b>${n}</b><span>${sh('dist')}: ${d}</span><span>${sh('rating')}: ${r}</span><span>${sh('here')}: ${sh2}</span><span>${sh('reqs')}: ${re}</span><span>${sh('tot')}: <b>${tot}</b></span></div>`;
+    h=`<span class="url">${sh('url')}s/thu-29-oct/applicants</span><h3>${sh('cmp')}</h3><div class="cmp">${col('Sara Lindqvist','≈55 km','★ 4.8 · 97%',sh('nreq'),'14',LANG==='sv'?'10 650 kr':'10,650 SEK')}${col('Per Nyström','≈185 km','★ 4.4 · 88%',sh('acc'),'6',LANG==='sv'?'11 550 kr + resa':'11,550 SEK + travel')}</div>
+    <div class="row"><button class="btn pri" data-a="cmpconf" data-v="sara">${sh('conf')} Sara</button><button class="btn" data-a="cmpconf" data-v="per">${sh('conf')} Per</button>${close}</div>`;
+  }else if(s.type==='roster'){
+    const [st1,c1]=shiftStatus(),sat=S.chat.k.some(m=>m.mid==='K17'||m.mid==='R04')?(LANG==='sv'?'Öppet för alla, 1 270 kr/tim':'Open to all, 1,270 SEK/h'):(S.chat.k.some(m=>m.mid==='K29')?(LANG==='sv'?'Hos bemanningsbolag + Locumo':'With agencies + Locumo'):(LANG==='sv'?'Obemannat':'Unfilled'));
+    const rows=LANG==='sv'?[['mån 26 okt 08–17','Johan Berg',''],['tis 27 okt 08–17','Sara Lindqvist',''],['ons 28 okt 08–17','Amira Haddad',''],['tor 29 okt 08–17',st1,c1],['fre 30 okt 08–17','Johan Berg',''],['lör 31 okt 09–15',sat,'w']]:[['Mon 26 Oct 08–17','Johan Berg',''],['Tue 27 Oct 08–17','Sara Lindqvist',''],['Wed 28 Oct 08–17','Amira Haddad',''],['Thu 29 Oct 08–17',st1,c1],['Fri 30 Oct 08–17','Johan Berg',''],['Sat 31 Oct 09–15',sat,'w']];
+    h=`<span class="url">${sh('url')}roster</span><h3>${sh('roster')}</h3><div class="rost">${rows.map(r=>`<div><span>${r[0]}</span><span class="pill ${r[2]}">${r[1]}</span></div>`).join('')}</div>${close}`;
+  }else if(s.type==='settings'){
+    const f=LANG==='sv'?[['Timarvode','1 150 kr'],['Egen personal först','4 tim'],['Tidigare anlitade','12 tim'],['Tidig bonus','300 kr inom 4 tim'],['Resetak','800 kr'],['Arvode visas för','Alla'],['Sen avbokning','48 tim, 50 %']]:[['Hourly rate','1,150 SEK'],['Own staff first','4 h'],['Alumni','12 h'],['Early bonus','300 SEK within 4 h'],['Travel cap','800 SEK'],['Rate shown to','Everyone'],['Late cancellation','48 h, 50%']];
+    h=`<span class="url">${sh('url')}settings</span><h3>${sh('set')}</h3>${f.map(x=>`<div class="fld"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}<div class="row"><button class="btn pri" data-a="savesheet">${sh('save')}</button>${close}</div>`;
+  }else if(s.type==='prefs'){
+    const f=LANG==='sv'?[['Utgångsort','Härnösand'],['Radie','150 km'],['Lägsta timarvode','1 000 kr'],['Dagar','mån–lör'],['Tyst tid','22:00–07:00'],['Kanal','WhatsApp (SMS som reserv)']]:[['Home base','Härnösand'],['Radius','150 km'],['Minimum rate','1,000 SEK/h'],['Days','Mon–Sat'],['Quiet hours','22:00–07:00'],['Channel','WhatsApp (SMS as backup)']];
+    h=`<span class="url">${sh('url')}me/preferences</span><h3>${sh('prefs')}</h3>${f.map(x=>`<div class="fld"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}<div class="row"><button class="btn pri" data-a="savesheet">${sh('save')}</button>${close}</div>`;
+  }else if(s.type==='concern'){
+    h=`<span class="url">${sh('url')}concern</span><h3>${sh('conc')}</h3><p style="margin:0;font-size:.85rem">${sh('concb')}</p><textarea id="conc-t" aria-label="${sh('conc')}"></textarea><div class="row"><button class="btn pri" data-a="sendconc">${sh('sendb')}</button>${close}</div>`;
+  }else if(s.type==='receipt'){
+    h=`<span class="url">${sh('url')}r/LOC-2026-1049/2</span><h3>${sh('rcpt')}</h3><span class="rcpt-thumb" style="width:100%;height:auto">${rcptText()}</span>${close}`;
+  }
+  return`<div class="sheet-ov" data-a="ovclose"><div class="sheet" role="dialog" aria-modal="true">${h}</div></div>`;
+}
+function rcptText(){return'P-SUNDSVALL AB\nBjörkdalsvägen 12\n\n29-10-2026  07:52\nZon 4  Dag\n\nATT BETALA   80,00 SEK\nKort ****\n\nTACK!'}
+
+/* ============ render ============ */
+const LOGO='<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="var(--accent)"/><path d="M16 5.6c-4.5 0-8.1 3.5-8.1 7.9 0 5.7 8.1 13 8.1 13s8.1-7.3 8.1-13c0-4.4-3.6-7.9-8.1-7.9z" fill="var(--accent-ink)"/><path d="M12.3 13.4l2.6 2.6 4.9-4.9" fill="none" stroke="var(--accent)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICS={send:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5v-6l8-2.5-8-2.5v-6L22 12z"/></svg>',cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>',list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14"/></svg>'};
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function fmtN(n){return new Intl.NumberFormat(LANG==='sv'?'sv-SE':'en-GB').format(n)}
+function msgText(m){let s=M[m.mid][1+li()];if(m.vars)for(const k in m.vars){let v=m.vars[k];v=typeof v==='number'?fmtN(v):Array.isArray(v)?v[li()]:v;s=s.split('{'+k+'}').join(v)}return s}
+const FD={};function fdt(ms,o,key){const k=key+LANG;return(FD[k]||(FD[k]=new Intl.DateTimeFormat(LANG==='sv'?'sv-SE':'en-GB',Object.assign({timeZone:'Europe/Stockholm'},o)))).format(ms)}
+const hm=ms=>fdt(ms,{hour:'2-digit',minute:'2-digit',hourCycle:'h23'},'hm');
+const dlab=ms=>fdt(ms,{weekday:'short',day:'numeric',month:'short'},'d');
+function expected(){if(S.sheet||S.ended)return null;const st=cur();if(!st||!st.m)return null;return st.m}
+let LASTSEQ=0;
+function phoneHTML(p){
+  const exp=expected(),[ea,eb]=exp?exp.split(':'):[];
+  let pulseMsg=null;if(exp&&ea!=='type'){const pp=ea[0]==='K'?'k':'s';if(pp===p)pulseMsg=lastMsg(p,ea,true)||lastMsg(p,ea,false)}
+  let lastDay='',out='';
+  for(const m of S.chat[p]){
+    const d=dlab(m.at);if(d!==lastDay){out+=`<div class="dsep">${esc(d)}</div>`;lastDay=d}
+    const isNew=Date.now()-(m.ts||0)<450?' new':'';
+    if(m.who==='me'){
+      const txt=Array.isArray(m.text)?m.text[li()]:m.text;
+      out+=`<div class="b me${isNew}">${m.photo?`<span class="rcpt-thumb">${esc(rcptText())}</span>`:esc(txt)}<div class="meta">${hm(m.at)} ✓✓</div></div>`;continue}
+    const def=M[m.mid],btns=def[3]||[];
+    out+=`<div class="bwrap"><div class="b them${isNew}">${esc(msgText(m))}<div class="meta">${def[0]?`<span class="tpl">${u('tpl')}</span>`:''}${hm(m.at)}</div></div>`;
+    for(const b of btns){const type=b[3]||'r',dis=type==='r'&&m.used,pl=pulseMsg===m&&b[0]===eb;
+      out+=`<button class="qb ${pl?'pulse':''}" data-a="qb" data-p="${p}" data-m="${m.id}" data-k="${b[0]}" ${dis?'disabled':''}>${type==='l'?ICS.link:type==='s'?ICS.list:''}${esc(b[1+li()])}</button>`}
+    out+='</div>';
+  }
+  const typePulse=exp&&ea==='type'&&eb===p;
+  const showCam=p==='s';
+  return`<div class="phone" id="ph-${p}"><p class="who">${u(p==='k'?'karin':'sara')}</p><div class="screen">
+  <div class="ph-head">${LOGO}<div><b>Locumo</b><span><span class="v">✓</span> ${u('biz')}</span></div></div>
+  <div class="msgs" id="msgs-${p}">${out}</div>
+  <form class="input" data-p="${p}"><input type="text" id="in-${p}" class="${typePulse?'pulse':''}" placeholder="${u('typemsg')}" autocomplete="off" aria-label="${u('typemsg')} ${p==='k'?'Karin':'Sara'}">${showCam?`<button type="button" class="ib alt ${S.await.s==='photo'?'pulse':''}" data-a="photo" aria-label="${u('photo')}">${ICS.cam}</button>`:''}<button class="ib" type="submit" aria-label="${u('send')}">${ICS.send}</button></form>
+  ${S.sheet&&S.sheet.p===p?sheetHTML():''}</div></div>`;
+}
+function render(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-a=lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===LANG));
+  document.getElementById('brand').innerHTML=`${LOGO}<span class="bname">locum<span class="bo">o</span></span><span class="sub">${u('sub')}</span>`;
+  const steps=flowSteps(),st=cur();
+  let cap='';for(let i=Math.min(S.step,steps.length-1);i>=0;i--){if(steps[i].c){cap=steps[i].c[li()];break}}
+  if(S.ended)cap=u(S.flow==='main'?'endmain':'endbr');else if(S.off)cap=u('offpath');
+  document.getElementById('capk').textContent=(S.flow==='main'?u('main'):u('branch')+': '+BR.find(b=>b[0]===S.flow)[1+li()])+' · '+(S.ended?u('done'):u('step').replace('{n}',S.step+1).replace('{t}',steps.length));
+  document.getElementById('cap').textContent=cap;
+  document.getElementById('clock').textContent=dlab(S.clock)+' '+hm(S.clock);
+  document.getElementById('nx').textContent=u('next');document.getElementById('bk').textContent=u('back');document.getElementById('rs').textContent=u('restart');
+  document.getElementById('nx').disabled=S.ended&&!S.sheet;document.getElementById('bk').disabled=!HIST.length;
+  const tb=document.getElementById('tabs');tb.innerHTML=['k','s'].map(p=>`<button data-a="tab" data-v="${p}" aria-pressed="${S.tab===p}">${u(p==='k'?'karin':'sara')}${S.unread[p]&&S.tab!==p?'<span class="dot"></span>':''}</button>`).join('');
+  const keep={};['k','s'].forEach(p=>{const el=document.getElementById('in-'+p);if(el)keep[p]=el.value});
+  const stage=document.getElementById('stage');stage.innerHTML=phoneHTML('k')+phoneHTML('s');
+  ['k','s'].forEach(p=>{const el=document.getElementById('in-'+p);if(el&&keep[p])el.value=keep[p];const ph=document.getElementById('ph-'+p);if(ph)ph.classList.toggle('hide',S.tab!==p);const box=document.getElementById('msgs-'+p);if(box)box.scrollTop=box.scrollHeight});
+  document.getElementById('brh').textContent=u('brh');
+  document.getElementById('bl').innerHTML=BR.map(b=>`<button data-a="branch" data-v="${b[0]}" aria-pressed="${S.flow===b[0]}">${esc(b[1+li()])}</button>`).join('');
+  document.getElementById('note').textContent=u('note');
+  // follow the phone that needs action on mobile
+  LASTSEQ=S.seq;
+}
+function autoTab(){const exp=expected();if(!exp)return;const [a,b]=exp.split(':');const p=a==='type'?b:(a[0]==='K'?'k':'s');if(S.tab!==p){S.tab=p;S.unread[p]=0}}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+
+/* ============ init / branches ============ */
+function start(){S=fresh();L('k','K01');L('s','S01');S.unread={k:0,s:0};S.clock=T('10-26','09:00')}
+function startBranch(name){start();const br=BRANCH[name];for(let i=0;i<br.at;i++)nextStep(true);S.flow=name;S.step=0;S.ended=false;S.off=false;S.sheet=null;S.unread={k:0,s:0};HIST=[];autoTab();LASTSEQ=S.seq;render()}
+
+/* ============ events ============ */
+document.addEventListener('click',e=>{
+  const ov=e.target.closest('[data-a=ovclose]');if(ov&&e.target===ov){if(S.sheet&&!S.sheet.busy){S.sheet=null;render()}return}
+  const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a;
+  if(a==='lang'){LANG=el.dataset.v;try{localStorage.setItem('locumo-chat-lang',LANG)}catch(_){}render();return}
+  if(a==='tab'){S.tab=el.dataset.v;S.unread[S.tab]=0;render();return}
+  if(a==='next'){snap();nextStep(false);autoTab();render();return}
+  if(a==='back'){const h=HIST.pop();if(h){S=JSON.parse(h);LASTSEQ=S.seq;render()}return}
+  if(a==='restart'){HIST=[];start();LASTSEQ=S.seq;render();return}
+  if(a==='branch'){startBranch(el.dataset.v);return}
+  if(a==='qb'){snap();const p=el.dataset.p,msg=S.chat[p].find(m=>m.id===Number(el.dataset.m));press(p,msg,el.dataset.k);autoTab();render();return}
+  if(a==='score'){snap();chooseScore(el.dataset.v);autoTab();render();return}
+  if(a==='sign'){doSign(false);return}
+  if(a==='closesheet'){if(S.sheet&&S.sheet.busy)return;S.sheet=null;render();return}
+  if(a==='cmpconf'){snap();const d=el.dataset.v;S.sheet=null;const msg=lastMsg('k','K05',true)||lastMsg('k','K05');const st=cur();if(st&&st.m==='K05:'+(d==='per'?'cper':'csara'))S.clock=Math.max(S.clock,st.t);if(msg){msg.used=true;U('k',btnLabel('K05',d==='per'?'cper':'csara'))}confirm(d);advanceIf('K05:'+(d==='per'?'cper':'csara'));render();return}
+  if(a==='savesheet'){S.sheet=null;render();toast(u('saved'));return}
+  if(a==='sendconc'){S.sheet=null;render();toast(u('sentc'));return}
+  if(a==='photo'){snap();const k=sendPhoto();if(k){advanceIf(k)}autoTab();render();return}
+});
+document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,p=f.dataset.p,inp=f.querySelector('input'),v=inp.value.trim();if(!v)return;snap();inp.value='';typed(p,v);autoTab();render()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.sheet&&!S.sheet.busy){S.sheet=null;render()}});
+
+start();LASTSEQ=S.seq;render();
+</script>
+
+</html>
